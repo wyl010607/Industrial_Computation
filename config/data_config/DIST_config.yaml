@@ -1,0 +1,71 @@
+# This is an example of data_config.yaml
+
+# data_preprocessors
+data_preprocessor_name: DCSDataPreprocessor
+data_preprocessor_params:
+  data_path: data/jl_0701_0801.csv
+  train_ratio: 0.6
+  valid_ratio: 0.2
+  adj_mx_path: data/jl_0701_0801_adj_mx.npy
+  process_vars_list: [
+    "BYNEJCC_DCS-JC-FET0705.DACA",
+    "BYNEJCC_DCS-JC-FET0709.DACA",
+    "BYNEJCC_DCS-JC-FET0711.DACA",
+    "BYNEJCC_DCS-JC-LT0702.DACA",
+    "BYNEJCC_DCS-JC-LT0703.DACA",
+    "BYNEJCC_DCS-JC-LT0704.DACA",
+    "BYNEJCC_DCS-JC-LT0705.DACA",
+    "BYNEJCC_DCS-JC-LT0706.DACA",
+    "BYNEJCC_DCS-JC-LT0712.DACA",
+  ]
+  control_vars_list: [
+    "BYNEJCC_DCS-JC-FET0705.PID_PLA.OP",
+    "BYNEJCC_DCS-JC-FET0709.PID_PLA.OP",
+    "BYNEJCC_DCS-JC-FET0711.PID_PLA.OP",
+    "BYNEJCC_DCS-JC-LT0702.PID_PLA.OP",
+    "BYNEJCC_DCS-JC-LT0703.PID_PLA.OP",
+    "BYNEJCC_DCS-JC-LT0704.PID_PLA.OP",
+    "BYNEJCC_DCS-JC-LT0705.PID_PLA.OP",
+    "BYNEJCC_DCS-JC-LT0706.PID_PLA.OP",
+    "BYNEJCC_DCS-JC-LT0712.PID_PLA.OP",
+  ]
+  disturb_vars_list: [
+    "BYNEJCC_DCS-JC-FET0712.DACA",
+    "BYNEJCC_DCS-JC-TE0736.DACA",
+    "BYNEJCC_DCS-JC-TE0738.DACA",
+    "BYNEJCC_DCS-JC-PT0703.DACA",
+    "BYNEJCC_DCS-JC-FET0701.DACA",
+    "BYNEJCC_DCS-JC-TE0702.DACA",
+    "BYNEJCC_DCS-JC-TE0703.DACA",
+    "BYNEJCC_DCS-JC-FET0703.DACA",
+    "BYNEJCC_DCS-JC-PT0701.DACA",
+    "BYNEJCC_DCS-JC-PT0702.DACA",
+    "BYNEJCC_DCS-JC-TE0705.DACA",
+    "BYNEJCC_DCS-JC-TE0712.DACA",
+    "BYNEJCC_DCS-JC-PT0706.DACA",
+    "BYNEJCC_DCS-JC-TE0716.DACA",
+    "BYNEJCC_DCS-JC-PT0705.DACA",
+    "BYNEJCC_DCS-JC-PT0708.DACA",
+    "BYNEJCC_DCS-JC-TE0725.DACA",
+    "BYNEJCC_DCS-JC-PT0741.DACA",
+    "BYNEJCC_DCS-JC-TE0721.DACA",
+  ]
+
+
+# Scaler
+scaler_name: StandardScaler
+scaler_params:
+  mean: 0
+  std: 1
+
+# Dataset
+dataset_name: MultiStepForecastDataset
+dataset_params:
+  history_len: 60
+  forecast_len: 20
+
+dataloader_params:
+  shuffle: False
+  num_workers: 0
+  pin_memory: True
+  drop_last: False
