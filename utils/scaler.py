@@ -20,7 +20,7 @@ class Scaler(ABC):
 
 
 class StandardScaler(Scaler):
-    def __init__(self, axis=0):
+    def __init__(self, axis=0, mean=None, std=None, *args, **kwargs):
         super(StandardScaler, self).__init__(axis)
         self.mean = None
         self.std = None
@@ -30,6 +30,7 @@ class StandardScaler(Scaler):
             data = np.array(data, dtype=np.float32)
         self.mean = np.mean(data, axis=self.axis)
         self.std = np.std(data, axis=self.axis)
+        self.std[self.std == 0] = 1  # avoid dividing by 0
 
     def transform(self, data, index=None):
         if not isinstance(data, np.ndarray):
@@ -51,7 +52,7 @@ class StandardScaler(Scaler):
 
 
 class MinMaxScaler(Scaler):
-    def __init__(self, axis=0):
+    def __init__(self, axis=0, min=None, max=None, *args, **kwargs):
         super(MinMaxScaler, self).__init__(axis)
         self.min = None
         self.max = None

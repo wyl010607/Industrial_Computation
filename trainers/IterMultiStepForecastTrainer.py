@@ -74,7 +74,7 @@ class IterMultiStepForecastTrainer(AbstractTrainer):
         self.OP_index_list = OP_index_list if OP_index_list is not None else []
         self._check_model_is_single_step()
 
-    def model_loss_func(self, y_pred, y_true, *args, **kwargs):
+    def loss_func(self, y_pred, y_true, *args, **kwargs):
         loss = torch.nn.SmoothL1Loss()(y_pred, y_true)
         return loss.mean()
 
@@ -98,7 +98,7 @@ class IterMultiStepForecastTrainer(AbstractTrainer):
                 sample_x[:, -1:, self.OP_index_list, :] = y[
                     :, i : i + 1, self.OP_index_list, :
                 ]
-                loss = self.model_loss_func(
+                loss = self.loss_func(
                     muti_step_pred, y[:, :, self.PV_index_list, :]
                 )
             self.optimizer.zero_grad()
@@ -149,10 +149,10 @@ class IterMultiStepForecastTrainer(AbstractTrainer):
                 sample_x[:, -1:, self.OP_index_list] = y[
                     :, i : i + 1, self.OP_index_list, :
                 ]
-                loss = self.model_loss_func(
-                    muti_step_pred, y[:, :, self.PV_index_list, :]
-                ).item()
-            tol_loss += loss
+            loss = self.loss_func(
+                muti_step_pred, y[:, :, self.PV_index_list, :]
+            ).item()
+            tol_loss += loss.item()
             data_num += 1
             y_true.append(y[:, :, self.PV_index_list, :])
             y_pred.append(muti_step_pred)

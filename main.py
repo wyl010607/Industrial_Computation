@@ -35,7 +35,7 @@ def main(args):
     data_config = load_config(args.data_config_path)
 
     # basic config
-    random_seed = train_config["seed"]
+    random_seed = train_config["random_seed"]
     device = torch.device(train_config["device"])
     batch_size = train_config["batch_size"]
     load_checkpoint = train_config["load_checkpoint"]
@@ -50,7 +50,7 @@ def main(args):
     data_preprocessor_class = getattr(
         sys.modules["data_preprocessors"], data_config["data_preprocessor_name"]
     )
-    data_preprocessor = data_preprocessor_class(**data_config["preprocess_config"])
+    data_preprocessor = data_preprocessor_class(**data_config["data_preprocessor_params"])
     preprocessed_data = data_preprocessor.preprocess()
 
     train_data, valid_data, test_data = data_preprocessor.split_data(preprocessed_data)
@@ -62,7 +62,7 @@ def main(args):
 
     # scale data
     scaler_class = getattr(sys.modules["utils.scaler"], data_config["scaler_name"])
-    scaler = scaler_class(**train_config["scaler_params"])
+    scaler = scaler_class(**data_config["scaler_params"])
     scaler.fit(train_data)
     train_data = scaler.transform(train_data)
     valid_data = scaler.transform(valid_data)
@@ -87,7 +87,7 @@ def main(args):
 
     # model
     model_class = getattr(sys.modules["models"], args.model_name)
-    model = model_class(**model_config["model_params"])
+    model = model_class(**model_config[args.model_name])
     model.to(device)
 
     # ------------------------- Trainer -------------------------
@@ -157,35 +157,35 @@ if __name__ == "__main__":
     parser.add_argument(
         "--train_config_path",
         type=str,
-        default="./config/train_config/multi_step_train_config.yaml",
+        default="./config/train_config/SAE_train_config.yaml",
         help="Config path of Trainer",
     )
 
     parser.add_argument(
         "--model_config_path",
         type=str,
-        default="./config/model_config/public_model_config.yaml",
+        default="./config/model_config/SAEs_model_config.yaml",
         help="Config path of models",
     )
 
     parser.add_argument(
         "--data_config_path",
         type=str,
-        default="./config/data_config/DIST_config.yaml",
+        default="./config/data_config/Flash_config.yaml",
         help="Config path of Data",
     )
-    parser.add_argument("--model_name", type=str, default="AGCRN", help="Model name")
+    parser.add_argument("--model_name", type=str, default="StackedAutoEncoder", help="Model name")
     parser.add_argument(
         "--model_save_path",
         type=str,
-        default="./model_states/test.pkl",
+        default="./model_states/StackedAutoEncoder.pkl",
         help="Model save path",
     )
 
     parser.add_argument(
         "--result_save_dir_path",
         type=str,
-        default="./result/test",
+        default="./results/StackedAutoEncoder",
         help="Result save path",
     )
     args = parser.parse_args()

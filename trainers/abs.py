@@ -73,7 +73,7 @@ class AbstractTrainer(ABC):
         self.model_save_path = model_save_path
         self.model_save_dir_path = os.path.dirname(model_save_path)
         self.result_save_dir_path = result_save_dir_path
-        self.epoch_now = 1
+        self.epoch_now = 0
         self.max_epoch_num = max_epoch_num
         self.enable_early_stop = enable_early_stop
         if self.enable_early_stop:
@@ -81,6 +81,7 @@ class AbstractTrainer(ABC):
         else:
             self.early_stop = None
         self.device = next(self.model.parameters()).device
+        self.min_loss = torch.finfo(torch.float32).max
 
     def train(
         self,
@@ -108,15 +109,14 @@ class AbstractTrainer(ABC):
             A dictionary containing training and evaluation results for each epoch.
         """
         tmp_state_save_path = os.path.join(self.model_save_dir_path, "temp.pkl")
-        min_loss = torch.finfo(torch.float32).max
         epoch_result_list = []
 
-        for epoch in range(self.epoch_now, self.max_epoch_num + 1):
+        for epoch in range(self.epoch_now, self.max_epoch_num):
             print(f"Epoch {epoch} / {self.max_epoch_num}")
-            self.epoch_now += 1
             self.save_checkpoint()
             # train
             train_loss = self.train_one_epoch(train_data_loader)  # 训练一个epoch
+            self.epoch_now += 1
             print(f"Train loss: {train_loss:.4f}")
             # evaluate
             eval_loss, metrics_evals, _, _ = self.evaluate(eval_data_loader, metrics)
@@ -132,8 +132,8 @@ class AbstractTrainer(ABC):
                 break
 
             # save best model
-            if eval_loss < min_loss:
-                min_loss = eval_loss
+            if eval_loss < self.min_loss:
+                self.min_loss = eval_loss
                 torch.save(self.model.state_dict(), tmp_state_save_path)
 
             # lr scheduler step
