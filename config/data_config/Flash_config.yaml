@@ -1,0 +1,57 @@
+# This is an example of data_config.yaml
+
+# data_preprocessors
+data_preprocessor_name: ASPENDataPreprocessor
+data_preprocessor_params:
+  data_path: data/flash.csv
+  train_ratio: 0.6
+  valid_ratio: 0.2
+  input_vars_list: [
+    'H2_IN',
+    'CO2_IN',
+    'CO_IN',
+    'N2_IN',
+    'CH4_IN',
+    'C2H6_IN',
+    'C2H4_IN',
+    'C3H8_IN',
+    'C3H6_IN',
+    'C4H10_IN',
+    '2-MET-01_IN',
+    'H2O_IN',
+    'Hm/10kcal/mol_IN',
+    'p/bar_IN',
+    'L_IN',
+  ]
+  output_vars_list: [
+    'H2_OUT',
+    'CO2_OUT',
+    'CO_OUT',
+    'N2_OUT',
+    'CH4_OUT',
+    'C2H6_OUT',
+    'C2H4_OUT',
+    'C3H8_OUT',
+    'C3H6_OUT',
+    'C4H10_OUT',
+    '2-MET-01_OUT',
+    'H2O_OUT',
+    'Vf_OUT',
+    'T/℃_OUT',
+    'L_OUT'
+  ]
+
+
+# Scaler
+scaler_name: StandardScaler
+scaler_params:
+  {}
+
+# Dataset
+dataset_name: SoftSensorDataset
+dataset_params: {}
+
+dataloader_params:
+  shuffle: True
+
+
