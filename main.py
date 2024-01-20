@@ -70,9 +70,9 @@ def main(args):
 
     # dataset
     dataset_class = getattr(sys.modules["datasets"], data_config["dataset_name"])
-    train_dataset = dataset_class(train_data, **data_config["dataset_params"])
-    valid_dataset = dataset_class(valid_data, **data_config["dataset_params"])
-    test_dataset = dataset_class(test_data, **data_config["dataset_params"])
+    train_dataset = dataset_class(train_data, type="train", **data_config["dataset_params"])
+    valid_dataset = dataset_class(valid_data, type="valid", **data_config["dataset_params"])
+    test_dataset = dataset_class(test_data, type="test", **data_config["dataset_params"])
     train_dataloader = DataLoader(
         train_dataset, batch_size=batch_size, **data_config["dataloader_params"]
     )
