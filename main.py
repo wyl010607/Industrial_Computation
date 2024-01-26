@@ -56,9 +56,9 @@ def main(args):
     train_data, valid_data, test_data = data_preprocessor.split_data(preprocessed_data)
 
     # update model & trainer params
-    data_config["dataset_params"].update(data_preprocessor.update_dataset_params)
-    model_config[args.model_name].update(data_preprocessor.update_model_params)
-    train_config["trainer_params"].update(data_preprocessor.update_trainer_params)
+    updated_dataset_params = {**data_config["dataset_params"], **data_preprocessor.update_dataset_params}
+    updated_model_params = {**model_config[args.model_name], **data_preprocessor.update_model_params}
+    updated_trainer_params = {**train_config["trainer_params"], **data_preprocessor.update_trainer_params}
 
     # scale data
     scaler_class = getattr(sys.modules["utils.scaler"], data_config["scaler_name"])
@@ -70,9 +70,9 @@ def main(args):
 
     # dataset
     dataset_class = getattr(sys.modules["datasets"], data_config["dataset_name"])
-    train_dataset = dataset_class(train_data, type="train", **data_config["dataset_params"])
-    valid_dataset = dataset_class(valid_data, type="valid", **data_config["dataset_params"])
-    test_dataset = dataset_class(test_data, type="test", **data_config["dataset_params"])
+    train_dataset = dataset_class(train_data, type="train", **updated_dataset_params)
+    valid_dataset = dataset_class(valid_data, type="valid", **updated_dataset_params)
+    test_dataset = dataset_class(test_data, type="test", **updated_dataset_params)
     train_dataloader = DataLoader(
         train_dataset, batch_size=batch_size, **data_config["dataloader_params"]
     )
@@ -87,7 +87,7 @@ def main(args):
 
     # model
     model_class = getattr(sys.modules["models"], args.model_name)
-    model = model_class(**model_config[args.model_name])
+    model = model_class(**updated_model_params)
     model.to(device)
 
     # ------------------------- Trainer -------------------------
@@ -113,7 +113,7 @@ def main(args):
         scaler,
         model_save_path,
         result_save_dir_path,
-        **train_config["trainer_params"]
+        **updated_trainer_params
     )
 
     # load checkpoint
@@ -124,7 +124,7 @@ def main(args):
     config = {
         "args": vars(args),
         "train_config": train_config,
-        "model_config": model_config,
+        "model_config": model_config[args.model_name],
         "data_config.yaml": data_config,
     }
     print("Configuration: ", config)
@@ -133,7 +133,7 @@ def main(args):
 
     print("Start training.")
 
-    epoch_results = trainer.train(train_dataloader, valid_dataloader)
+    #epoch_results = trainer.train(train_dataloader, valid_dataloader)
     test_result, y_pred, y_true = trainer.test(test_dataloader)
 
     # save y_pred, y_true to self.result_save_dir/y_pred.npy, y_true.npy
@@ -141,13 +141,13 @@ def main(args):
     np.save(os.path.join(result_save_dir_path, "test_y_true.npy"), y_true)
 
     # save results
-    result = {
+    '''result = {
         "config": config,
         "test_result": test_result,
         "epoch_results": epoch_results,
     }
     with open(os.path.join(result_save_dir_path, "result.json"), "w") as f:
-        json.dump(result, f, indent=4)
+        json.dump(result, f, indent=4)'''
 
     print("Training finished.")
 
@@ -157,35 +157,35 @@ if __name__ == "__main__":
     parser.add_argument(
         "--train_config_path",
         type=str,
-        default="./config/train_config/SAE_train_config.yaml",
+        default="./config/train_config/TPGNN_train_config.yaml",
         help="Config path of Trainer",
     )
 
     parser.add_argument(
         "--model_config_path",
         type=str,
-        default="./config/model_config/SAEs_model_config.yaml",
+        default="./config/model_config/TPGNN_model_config.yaml",
         help="Config path of models",
     )
 
     parser.add_argument(
         "--data_config_path",
         type=str,
-        default="./config/data_config/Flash_config.yaml",
+        default="./config/data_config/PEMSD7_config.yaml",
         help="Config path of Data",
     )
-    parser.add_argument("--model_name", type=str, default="StackedAutoEncoder", help="Model name")
+    parser.add_argument("--model_name", type=str, default="STAGNN_stamp", help="Model name")
     parser.add_argument(
         "--model_save_path",
         type=str,
-        default="./model_states/StackedAutoEncoder.pkl",
+        default="./model_states/TPGNN/TPGNN1.pkl",
         help="Model save path",
     )
 
     parser.add_argument(
         "--result_save_dir_path",
         type=str,
-        default="./results/StackedAutoEncoder",
+        default="./results/TPGNN1",
         help="Result save path",
     )
     args = parser.parse_args()
