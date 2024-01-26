@@ -1,5 +1,6 @@
 import numpy as np
 from .abs import AbstractDataPreprocessor
+import pandas as pd
 
 
 class ASPENDataPreprocessor(AbstractDataPreprocessor):
