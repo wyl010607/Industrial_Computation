@@ -3,10 +3,11 @@
 # data_preprocessors
 data_preprocessor_name: DCSDataPreprocessor
 data_preprocessor_params:
-  data_path: data/jl_0701_0801.csv
+  data_path: data/jl_0701_0801.npz
   train_ratio: 0.6
   valid_ratio: 0.2
-  adj_mx_path: data/jl_0701_0801_adj_mx.npy
+  adj_mx_path: data/jl_0701_0801_corr_adj_mx.npy
+  history_len: 60
   process_vars_list: [
     "BYNEJCC_DCS-JC-FET0705.DACA",
     "BYNEJCC_DCS-JC-FET0709.DACA",

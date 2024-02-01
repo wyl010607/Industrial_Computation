@@ -157,35 +157,35 @@ if __name__ == "__main__":
     parser.add_argument(
         "--train_config_path",
         type=str,
-        default="./config/train_config/SAE_train_config.yaml",
+        default="./config/train_config/multi_step_train_config.yaml",
         help="Config path of Trainer",
     )
 
     parser.add_argument(
         "--model_config_path",
         type=str,
-        default="./config/model_config/SAEs_model_config.yaml",
+        default="./config/model_config/public_model_config.yaml",
         help="Config path of models",
     )
 
     parser.add_argument(
         "--data_config_path",
         type=str,
-        default="./config/data_config/Flash_config.yaml",
+        default="./config/data_config/DIST_config.yaml",
         help="Config path of Data",
     )
-    parser.add_argument("--model_name", type=str, default="StackedAutoEncoder", help="Model name")
+    parser.add_argument("--model_name", type=str, default="ASTGCN", help="Model name")
     parser.add_argument(
         "--model_save_path",
         type=str,
-        default="./model_states/StackedAutoEncoder.pkl",
+        default="./model_states/test.pkl",
         help="Model save path",
     )
 
     parser.add_argument(
         "--result_save_dir_path",
         type=str,
-        default="./results/StackedAutoEncoder",
+        default="./results/test",
         help="Result save path",
     )
     args = parser.parse_args()

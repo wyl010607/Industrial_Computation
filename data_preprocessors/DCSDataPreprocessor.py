@@ -43,6 +43,7 @@ class DCSDataPreprocessor(AbstractDataPreprocessor):
         self.adj_mx = None
         self.vars_index_dict = None
         self.time_stamp_array = None
+        self.history_len = kwargs.get("history_len", 60)
         self.adj_mx_path = adj_mx_path if adj_mx_path is not None else None
         self.process_vars_list = (
             process_vars_list if process_vars_list is not None else []
@@ -107,6 +108,7 @@ class DCSDataPreprocessor(AbstractDataPreprocessor):
             self.adj_mx = np.load(self.adj_mx_path)
             self.update_trainer_params["adj_mx"] = self.adj_mx
         self.update_model_params["adj_mx"] = self.adj_mx
+        self.update_model_params["history_len"] = self.history_len
         return preprocessed_data
 
     def split_data(self, preprocessed_data):

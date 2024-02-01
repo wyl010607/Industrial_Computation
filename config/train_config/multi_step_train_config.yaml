@@ -2,7 +2,7 @@
 
 # basic
 random_seed: 3407
-batch_size: 128
+batch_size: 32
 device: cuda:0
 load_checkpoint: False
 
