@@ -1,0 +1,30 @@
+# This is an example of model_config.yaml
+
+STDMAE:
+  mask_args:
+    patch_size: 20
+    in_channel: 1
+    embed_dim: 96
+    num_heads: 4
+    mlp_ratio: 4
+    dropout: 0.1
+    mask_ratio: 0.25
+    encoder_depth: 4
+    decoder_depth: 1
+    mode: forecasting
+
+  backend_args:
+    dropout: 0.3
+    gcn_bool: True
+    addaptadj: False
+    aptinit:
+    in_dim: 1
+    out_dim: 20
+    residual_channels: 32
+    dilation_channels: 32
+    skip_channels: 256
+    end_channels: 512
+    kernel_size: 3
+    blocks: 5
+    layers: 3
+

@@ -107,6 +107,7 @@ class DCSDataPreprocessor(AbstractDataPreprocessor):
             self.adj_mx = np.load(self.adj_mx_path)
             self.update_trainer_params["adj_mx"] = self.adj_mx
         self.update_model_params["adj_mx"] = self.adj_mx
+        self.update_model_params["num_nodes"] = len(indices)
         return preprocessed_data
 
     def split_data(self, preprocessed_data):

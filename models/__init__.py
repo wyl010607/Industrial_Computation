@@ -4,4 +4,7 @@ from .public.Autoformer.autoformer_arch import Autoformer
 
 from .soft_sensor.SAE.SAE_arch import StackedAutoEncoder
 
-__all__ = ["AGCRN", "Autoformer", "StackedAutoEncoder"]
+from .pretrain.stdmae_arch.stdmae import STDMAE
+from .pretrain.stdmae_arch.mask import STDMask
+
+__all__ = ["AGCRN", "Autoformer", "StackedAutoEncoder", "STDMAE", "STDMask"]

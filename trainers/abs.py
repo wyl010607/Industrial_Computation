@@ -217,7 +217,10 @@ class AbstractTrainer(ABC):
         for epoch, train_loss, eval_loss, metrics_evals in epoch_result_list:
             epoch_result[epoch] = {"train_loss": train_loss, "eval_loss": eval_loss}
             for metric_name, metric_eval in metrics_evals:
-                epoch_result[epoch][metric_name] = metric_eval
+                epoch_result[epoch][metric_name] = metric_eval.item()
+        # if dir not exist, create it
+        if not os.path.exists(self.result_save_dir_path):
+            os.makedirs(self.result_save_dir_path)
         with open(
             os.path.join(self.result_save_dir_path, "epoch_result.json"), "w"
         ) as f:

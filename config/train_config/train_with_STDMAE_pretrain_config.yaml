@@ -1,0 +1,81 @@
+#This is an example of train_config.yaml
+
+# basic
+random_seed: 3407
+batch_size: 32
+device: cuda:0
+load_checkpoint: False
+
+# Optimizer
+optimizer_name: Adam
+optimizer_params:
+  lr: 0.002
+  weight_decay: 1.0e-5
+  eps: 1.0e-8
+
+# Scheduler
+scheduler_name: MultiStepLR
+scheduler_params:
+  milestones: [ 1, 18, 36, 54, 72 ]
+  gamma: 0.5
+
+
+# Trainer
+trainer_name: STDMAETrainer
+trainer_params:
+  max_epoch_num: 80
+  early_stop: 10
+  skip_pretrain: True
+  pretrain_model_name: STDMask
+  pretrain_model_params:
+    s_model_params:
+      patch_size: 20
+      in_channel: 1
+      embed_dim: 96
+      num_heads: 4
+      mlp_ratio: 4
+      dropout: 0.1
+      mask_ratio: 0.25
+      encoder_depth: 4
+      decoder_depth: 1
+      spatial: True
+      mode: pre-train
+
+    t_model_params:
+      patch_size: 20
+      in_channel: 1
+      embed_dim: 96
+      num_heads: 4
+      mlp_ratio: 4
+      dropout: 0.1
+      mask_ratio: 0.25
+      encoder_depth: 4
+      decoder_depth: 1
+      spatial: False
+      mode: pre-train
+
+  pretrainer_params:
+    optimizer_name: Adam
+    optimizer_params:
+      s_model_params:
+        lr: 0.002
+        weight_decay: 1.0e-5
+        eps: 1.0e-8
+      t_model_params:
+        lr: 0.002
+        weight_decay: 1.0e-5
+        eps: 1.0e-8
+    # Scheduler
+    scheduler_name: MultiStepLR
+    scheduler_params:
+      s_model_params:
+        milestones: [ 50 ]
+        gamma: 0.5
+      t_model_params:
+        milestones: [ 50 ]
+        gamma: 0.5
+    #Pretrainer
+    trainer_name: MAEPretrainer
+    trainer_params:
+      max_epoch_num: 1
+      early_stop: 10
