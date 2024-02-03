@@ -133,7 +133,7 @@ def main(args):
 
     print("Start training.")
 
-    #epoch_results = trainer.train(train_dataloader, valid_dataloader)
+    epoch_results = trainer.train(train_dataloader, valid_dataloader)
     test_result, y_pred, y_true = trainer.test(test_dataloader)
 
     # save y_pred, y_true to self.result_save_dir/y_pred.npy, y_true.npy
@@ -141,13 +141,13 @@ def main(args):
     np.save(os.path.join(result_save_dir_path, "test_y_true.npy"), y_true)
 
     # save results
-    '''result = {
+    result = {
         "config": config,
         "test_result": test_result,
         "epoch_results": epoch_results,
     }
     with open(os.path.join(result_save_dir_path, "result.json"), "w") as f:
-        json.dump(result, f, indent=4)'''
+        json.dump(result, f, indent=4)
 
     print("Training finished.")
 
@@ -157,35 +157,35 @@ if __name__ == "__main__":
     parser.add_argument(
         "--train_config_path",
         type=str,
-        default="./config/train_config/TPGNN_train_config.yaml",
+        default="./config/train_config/CTPGNN_train_config.yaml",
         help="Config path of Trainer",
     )
 
     parser.add_argument(
         "--model_config_path",
         type=str,
-        default="./config/model_config/TPGNN_model_config.yaml",
+        default="./config/model_config/CTPGNN_model_config.yaml",
         help="Config path of models",
     )
 
     parser.add_argument(
         "--data_config_path",
         type=str,
-        default="./config/data_config/PEMSD7_config.yaml",
+        default="./config/data_config/DIST_config.yaml",
         help="Config path of Data",
     )
-    parser.add_argument("--model_name", type=str, default="STAGNN_stamp", help="Model name")
+    parser.add_argument("--model_name", type=str, default="CSTAGNN_stamp", help="Model name")
     parser.add_argument(
         "--model_save_path",
         type=str,
-        default="./model_states/TPGNN/TPGNN1.pkl",
+        default="./model_states/CTPGNN/CTPGNN2.pkl",
         help="Model save path",
     )
 
     parser.add_argument(
         "--result_save_dir_path",
         type=str,
-        default="./results/TPGNN1",
+        default="./results/CTPGNN2",
         help="Result save path",
     )
     args = parser.parse_args()

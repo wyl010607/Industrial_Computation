@@ -1,12 +1,13 @@
 import warnings
 
+import numpy as np
 import tqdm
 from tqdm import tqdm
 import torch
 from trainers.abs import AbstractTrainer
 
 
-class IterMultiStepForecastTrainer(AbstractTrainer):
+class CTPGNNTrainer(AbstractTrainer):
     """
     A Trainer subclass for iter multi-step forecasting.
     """
@@ -20,6 +21,7 @@ class IterMultiStepForecastTrainer(AbstractTrainer):
         model_save_path,
         result_save_dir_path,
         max_epoch_num,
+        forecast_len,
         enable_early_stop=False,
         early_stop_patience=5,
         early_stop_min_is_best=True,
@@ -72,7 +74,8 @@ class IterMultiStepForecastTrainer(AbstractTrainer):
         )
         self.PV_index_list = PV_index_list if PV_index_list is not None else []
         self.OP_index_list = OP_index_list if OP_index_list is not None else []
-        self._check_model_is_single_step()
+        self.forecast_len = forecast_len
+        #self._check_model_is_single_step()
 
     def loss_func(self, y_pred, y_true, *args, **kwargs):
         loss = torch.nn.SmoothL1Loss()(y_pred, y_true)
@@ -82,20 +85,22 @@ class IterMultiStepForecastTrainer(AbstractTrainer):
         self.model.train()
         total_loss = 0
         tqmd_ = tqdm(data_loader)
-        for x, y in tqmd_:
+        for x, y, stamp in tqmd_:
             x = x.type(torch.float32).to(
                 self.device
             )  # [batch_size, history_len, num_vars, channels]
             y = y.type(torch.float32).to(self.device)
-            sample_x = x
+            stamp = stamp.type(torch.LongTensor).to(self.device)
+            sample_pred = torch.zeros_like(y)
             muti_step_pred = torch.zeros_like(y[:, :, self.PV_index_list, :])
-            for i in range(y.shape[1]):
-                prediction = self.model(sample_x)
+            for i in range(self.forecast_len):
+                prediction = self.model(x, stamp, sample_pred)
+                prediction = prediction[:, i : i + 1, :, :]
                 muti_step_pred[:, i : i + 1, :, :] = prediction[
                     :, :, self.PV_index_list, :
                 ]
-                sample_x = torch.cat((sample_x[:, 1:, :, :], prediction), dim=1)
-                sample_x[:, -1:, self.OP_index_list, :] = y[
+                sample_pred[:, i : i + 1, :, :] = prediction
+                sample_pred[:, i : i + 1, self.OP_index_list, :] = y[
                     :, i : i + 1, self.OP_index_list, :
                 ]
             loss = self.loss_func(
@@ -135,19 +140,23 @@ class IterMultiStepForecastTrainer(AbstractTrainer):
 
         y_true, y_pred, tol_loss, data_num = [], [], 0, 0
         pred_step = data_loader.dataset.forecast_len
-        for x, y in data_loader:
-            x = x.type(torch.float32).to(self.device)
+        for x, y, stamp in data_loader:
+            x = x.type(torch.float32).to(
+                self.device
+            )  # [batch_size, history_len, num_vars, channels]
             y = y.type(torch.float32).to(self.device)
+            stamp = stamp.type(torch.LongTensor).to(self.device)
+            sample_pred = torch.zeros_like(y)
             muti_step_pred = torch.zeros_like(y[:, :, self.PV_index_list, :])
-            sample_x = x
-            for i in range(y.shape[1]):
-                prediction = self.model(sample_x, iter_step=i).detach()
-                muti_step_pred[:, i : i + 1, :, :] = prediction[
+            for i in range(self.forecast_len):
+                prediction = self.model(x, stamp, sample_pred)
+                prediction = prediction[:, i: i + 1, :, :]
+                muti_step_pred[:, i: i + 1, :, :] = prediction[
                     :, :, self.PV_index_list, :
                 ]
-                sample_x = torch.cat((sample_x[:, 1:, :, :], prediction), dim=1)
-                sample_x[:, -1:, self.OP_index_list] = y[
-                    :, i : i + 1, self.OP_index_list, :
+                sample_pred[:, i: i + 1, :, :] = prediction
+                sample_pred[:, i: i + 1, self.OP_index_list, :] = y[
+                    :, i: i + 1, self.OP_index_list, :
                 ]
             loss = self.loss_func(
                 muti_step_pred, y[:, :, self.PV_index_list, :]
