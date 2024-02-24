@@ -1,0 +1,35 @@
+2024-02-23 03:24:03,163 - easytorch-training - INFO - Initializing training.
+2024-02-23 03:24:03,163 - easytorch-training - INFO - Set clip grad, param: {'max_norm': 5.0}
+2024-02-23 03:24:03,163 - easytorch-training - INFO - Building training data loader.
+2024-02-23 03:24:03,255 - easytorch-training - INFO - Set optim: Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: [0.9, 0.95]
+    eps: 1e-08
+    lr: 0.0005
+    weight_decay: 0
+)
+2024-02-23 03:24:03,255 - easytorch-training - INFO - Set lr_scheduler: <torch.optim.lr_scheduler.MultiStepLR object at 0x7fcc32a5af40>
+2024-02-23 03:24:03,256 - easytorch-training - INFO - Initializing validation.
+2024-02-23 03:24:03,256 - easytorch-training - INFO - Building val data loader.
+2024-02-23 03:24:03,356 - easytorch-training - INFO - Epoch 1 / 100
+2024-02-23 03:24:22,098 - easytorch-training - ERROR - Traceback (most recent call last):
+  File "/root/py_time_forecasting/STEP/basicts/launcher.py", line 20, in launch_training
+    easytorch.launch_training(cfg=cfg, devices=gpus, node_rank=node_rank)
+TypeError: launch_training() got an unexpected keyword argument 'devices'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/root/anaconda3/envs/step/lib/python3.9/site-packages/easytorch/launcher/launcher.py", line 52, in training_func
+    runner.train(cfg)
+  File "/root/anaconda3/envs/step/lib/python3.9/site-packages/easytorch/core/runner.py", line 351, in train
+    loss = self.train_iters(epoch, iter_index, data)
+  File "/root/py_time_forecasting/STEP/basicts/runners/base_tsf_runner.py", line 238, in train_iters
+    forward_return = list(self.forward(data=data, epoch=epoch, iter_num=iter_num, train=True))
+  File "/root/py_time_forecasting/STEP/step/step_runner/tsformer_runner.py", line 58, in forward
+    history_data    = self.to_running_device(history_data)      # B, L, N, C
+  File "/root/anaconda3/envs/step/lib/python3.9/site-packages/easytorch/core/runner.py", line 101, in to_running_device
+    return src.cuda()
+KeyboardInterrupt
+

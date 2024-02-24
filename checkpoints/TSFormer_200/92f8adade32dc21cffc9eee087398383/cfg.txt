@@ -1,0 +1,74 @@
+DESCRIPTION: TSFormer(PEMS04) configuration
+RUNNER: <class 'step.step_runner.tsformer_runner.TSFormerRunner'>
+DATASET_CLS: <class 'basicts.data.dataset.TimeSeriesForecastingDataset'>
+DATASET_NAME: PEMS04
+DATASET_TYPE: Traffic flow
+DATASET_INPUT_LEN: 4032
+DATASET_OUTPUT_LEN: 12
+GPU_NUM: 2
+ENV:
+  SEED: 0
+  CUDNN:
+    ENABLED: True
+MODEL:
+  NAME: TSFormer
+  ARCH: <class 'step.step_arch.tsformer.tsformer.TSFormer'>
+  PARAM:
+    patch_size: 12
+    in_channel: 1
+    embed_dim: 96
+    num_heads: 4
+    mlp_ratio: 4
+    dropout: 0.1
+    num_token: 336.0
+    mask_ratio: 0.75
+    encoder_depth: 4
+    decoder_depth: 1
+    mode: pre-train
+  FORWARD_FEATURES: [0]
+  TARGET_FEATURES: [0]
+TRAIN:
+  LOSS: masked_mae
+  OPTIM:
+    TYPE: Adam
+    PARAM:
+      lr: 0.001
+      weight_decay: 0
+      eps: 1e-08
+      betas: [0.9, 0.95]
+  LR_SCHEDULER:
+    TYPE: MultiStepLR
+    PARAM:
+      milestones: [50]
+      gamma: 0.5
+  CLIP_GRAD_PARAM:
+    max_norm: 5.0
+  NUM_EPOCHS: 200
+  CKPT_SAVE_DIR: checkpoints/TSFormer_200
+  DATA:
+    DIR: datasets/PEMS04
+    BATCH_SIZE: 6
+    PREFETCH: False
+    SHUFFLE: True
+    NUM_WORKERS: 2
+    PIN_MEMORY: True
+  NULL_VAL: 0.0
+VAL:
+  INTERVAL: 1
+  DATA:
+    DIR: datasets/PEMS04
+    BATCH_SIZE: 8
+    PREFETCH: False
+    SHUFFLE: False
+    NUM_WORKERS: 2
+    PIN_MEMORY: True
+TEST:
+  INTERVAL: 1
+  DATA:
+    DIR: datasets/PEMS04
+    BATCH_SIZE: 8
+    PREFETCH: False
+    SHUFFLE: False
+    NUM_WORKERS: 2
+    PIN_MEMORY: True
+MD5: 92f8adade32dc21cffc9eee087398383
