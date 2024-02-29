@@ -1,0 +1,23 @@
+net:
+#  gamma: 0.9
+  enc_in: 7
+#  dec_in: 7
+  c_out: 7
+#  d_model: 512
+#  n_heads: 8
+#  e_layers: 2
+#  d_layers: 1
+#  s_layers: '3,2,1'
+#  d_ff: 2048
+#  factor: 5
+#  padding: 0
+#  distil: True   #111
+#  dropout: 0.05
+#  attn: 'prob'
+#  embed: 'timeF'
+#  activation: 'gelu'
+#  output_attention: False #111
+#  do_predict: False #111
+#  mix: True  #111
+#  cols:
+

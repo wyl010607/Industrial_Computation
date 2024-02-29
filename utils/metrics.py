@@ -126,3 +126,16 @@ def masked_mape(preds, labels, null_val=np.nan):
     loss = loss * mask
     loss = torch.where(torch.isnan(loss), torch.zeros_like(loss), loss)
     return loss
+
+
+def metric(pred, true):
+    mae = get_mae(pred, true)
+    mse = get_mse(pred, true)
+    rmse = get_rmse(pred, true)
+    mape = get_mape(pred, true)
+
+    return mae, mse, rmse, mape
+
+def cumavg(m):
+    cumsum= np.cumsum(m)
+    return cumsum / np.arange(1, cumsum.size + 1)

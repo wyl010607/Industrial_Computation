@@ -28,5 +28,4 @@ def predict_stamp(model, src, stamp, trg):
             dec_output = model.decoder(dec_input, enc_output)
             dec_output = model.dec_rdu(dec_output)
             trg[:, :, i, :] = dec_output[:, :, i, :]
-
         return trg.permute(0, 2, 1, 3)

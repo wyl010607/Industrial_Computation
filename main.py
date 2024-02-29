@@ -38,12 +38,17 @@ def main(args):
     random_seed = train_config["random_seed"]
     device = torch.device(train_config["device"])
     batch_size = train_config["batch_size"]
+    if train_config.get("test_bsz", None) !=None :
+        online_batch_size = train_config["test_bsz"]
+    else:
+        online_batch_size = batch_size
     load_checkpoint = train_config["load_checkpoint"]
 
     # set random seeds for reproducibility
     torch.manual_seed(random_seed)
     torch.cuda.manual_seed(random_seed)
     np.random.seed(random_seed)
+    random.seed(random_seed)
     random.seed(random_seed)
 
     # ----------------------- Load data ------------------------
@@ -74,13 +79,13 @@ def main(args):
     valid_dataset = dataset_class(valid_data, type="valid", **updated_dataset_params)
     test_dataset = dataset_class(test_data, type="test", **updated_dataset_params)
     train_dataloader = DataLoader(
-        train_dataset, batch_size=batch_size, **data_config["dataloader_params"]
+        train_dataset, batch_size=batch_size, **data_config["dataloader_params"]["train"]
     )
     valid_dataloader = DataLoader(
-        valid_dataset, batch_size=batch_size, **data_config["dataloader_params"]
+        valid_dataset, batch_size=batch_size, **data_config["dataloader_params"]["valid"]
     )
     test_dataloader = DataLoader(
-        test_dataset, batch_size=batch_size, **data_config["dataloader_params"]
+        test_dataset, batch_size=online_batch_size, **data_config["dataloader_params"]["test"]
     )
 
     # ------------------------- Model ---------------------------
@@ -190,3 +195,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     main(args)
+

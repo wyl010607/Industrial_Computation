@@ -67,8 +67,19 @@ dataset_params:
   cycle: 288
   num_route: 37
 
-dataloader_params:
-  shuffle: True
-  num_workers: 0
-  pin_memory: True
-  drop_last: False
+dataloader_params: #和原论文中有些区别，后面可以改
+  train:
+    shuffle: True
+    num_workers: 0
+    pin_memory: True
+    drop_last: False
+  valid:
+    shuffle: True
+    num_workers: 0
+    pin_memory: True
+    drop_last: False
+  test:
+    shuffle: True
+    num_workers: 0
+    pin_memory: True
+    drop_last: False

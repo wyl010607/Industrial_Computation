@@ -3,13 +3,13 @@ import torch
 from .abs import AbstractDataset
 
 
-class CTPGNNDataset(AbstractDataset):
+class ETTh2Dataset(AbstractDataset):
     """
     A dataset class for multi-step time series forecasting.
     Single step forecasting is a special case of multi-step forecasting when set forecast_len=1.
     """
 
-    def __init__(self, data, history_len, forecast_len, cycle, *args, **kwargs):
+    def __init__(self, data, history_len, forecast_len, data_stamp, type, *args, **kwargs):
         """
         Initialize the MultiStepForecastDataset.
 
@@ -27,17 +27,11 @@ class CTPGNNDataset(AbstractDataset):
             The length of the forecast data sequence.
         """
         super().__init__(data, *args, **kwargs)
-        if len(data.shape) == 2:
-            data = np.expand_dims(data, axis=-1)
         self.data = data
         self.history_len = history_len
         self.forecast_len = forecast_len
-        T, N, C = data.shape
-        time_stamp = np.zeros(T)
-        for idx in range(T):
-            time_stamp[idx] = idx % cycle
-
-        self.time_stamp = time_stamp
+        self.type = type
+        self.data_stamp = data_stamp
 
     def __getitem__(self, index):
         """
@@ -54,10 +48,25 @@ class CTPGNNDataset(AbstractDataset):
             A tuple containing two tensors: the historical data (x) with dimensions (history_len, N, C) and the forecast
             data (y) with dimensions (forecast_len, N, C), both as torch.float32 tensors.
         """
-        x = self.data[index : index + self.history_len]
-        y = self.data[index + self.history_len : index + self.history_len + self.forecast_len]
-        stamp = self.time_stamp[index: index + self.history_len]  #这个stamp的索引好像有点问题
-        return torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.float32), torch.tensor(stamp, dtype=torch.float32)
+
+        s_begin = index
+        s_end = s_begin + self.history_len
+        r_begin = s_end
+        r_end = r_begin + self.forecast_len
+
+        x = self.data[s_begin:s_end]
+        y = self.data[r_begin:r_end]
+        if self.type == "train":
+            x_mark = self.data_stamp[0][s_begin:s_end]
+            y_mark = self.data_stamp[0][r_begin:r_end]
+        elif self.type == "valid":
+            x_mark = self.data_stamp[1][s_begin:s_end]
+            y_mark = self.data_stamp[1][r_begin:r_end]
+        else:
+            x_mark = self.data_stamp[2][s_begin:s_end]
+            y_mark = self.data_stamp[2][r_begin:r_end]
+
+        return x, y, x_mark, y_mark
 
     def __len__(self):
         return self.data.shape[0] - self.history_len - self.forecast_len + 1
