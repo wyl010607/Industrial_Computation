@@ -28,3 +28,55 @@ STDMAE:
     blocks: 5
     layers: 3
 
+STIDAE:
+  noise_args:
+    patch_size: 20
+    in_channel: 1
+    embed_dim: 96
+    num_heads: 4
+    mlp_ratio: 4
+    dropout: 0.1
+    pca_rank: 10
+    noise_type: ['gaussian', 'uniform']
+    noise_intensity: {
+        'gaussian': {
+            'mean': 0,    # 噪声的均值
+            'std': 0.1    # 噪声的标准差
+        },
+        'uniform': {
+            'a': -0.2,    # 均匀分布的下界
+            'b': 0.2      # 均匀分布的上界
+        },
+        'salt_pepper': {
+            'prob': 0.05,     # 像素变为盐或胡椒的概率
+            'salt_val': 1,    # 盐的值
+            'pepper_val': 0   # 胡椒的值
+        },
+        'sine': {
+            'freq': 1,    # 正弦波的频率
+            'amp': 1,     # 正弦波的振幅
+            'phase': 0    # 正弦波的相位
+        },
+        'random_walk': {
+            'step_std': 1     # 每一步的标准差
+        }
+    }
+    encoder_depth: 4
+    decoder_depth: 1
+    mode: forecasting
+
+  backend_args:
+    dropout: 0.3
+    gcn_bool: True
+    addaptadj: False
+    aptinit:
+    in_dim: 1
+    out_dim: 20
+    residual_channels: 32
+    dilation_channels: 32
+    skip_channels: 256
+    end_channels: 512
+    kernel_size: 3
+    blocks: 5
+    layers: 3
+

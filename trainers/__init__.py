@@ -4,6 +4,7 @@ from .SAETrainer import SAETrainer
 from .SoftSensorTrainer import SoftSensorTrainer
 from .STDMAETrainer import STDMAETrainer
 from .MAEPretrainer import MAEPretrainer
+from .IDAEPretrainer import IDAEPretrainer
 
 __all__ = [
     "AbstractTrainer",
@@ -12,4 +13,5 @@ __all__ = [
     "SoftSensorTrainer",
     "STDMAETrainer",
     "MAEPretrainer",
+    "IDAEPretrainer",
 ]

@@ -157,7 +157,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--train_config_path",
         type=str,
-        default="./config/train_config/train_with_STDMAE_pretrain_config.yaml",
+        default="./config/train_config/train_with_STIDAE_pretrain_config.yaml",
         help="Config path of Trainer",
     )
 
@@ -174,19 +174,57 @@ if __name__ == "__main__":
         default="./config/data_config/DIST_config.yaml",
         help="Config path of Data",
     )
-    parser.add_argument("--model_name", type=str, default="STDMAE", help="Model name")
+    parser.add_argument("--model_name", type=str, default="STIDAE", help="Model name")
     parser.add_argument(
         "--model_save_path",
         type=str,
-        default="./model_states/STDMAE.pkl",
+        default="./model_states/STIDAE.pkl",
         help="Model save path",
     )
 
     parser.add_argument(
         "--result_save_dir_path",
         type=str,
-        default="./results/STDMAE",
+        default="./results/STIDAE",
         help="Result save path",
     )
     args = parser.parse_args()
     main(args)
+
+    #parser = argparse.ArgumentParser()
+    #parser.add_argument(
+    #    "--train_config_path",
+    #    type=str,
+    #    default="./config/train_config/train_with_STDMAE_pretrain_config.yaml",
+    #    help="Config path of Trainer",
+    #)
+#
+    #parser.add_argument(
+    #    "--model_config_path",
+    #    type=str,
+    #    default="./config/model_config/pretrain_model_config.yaml",
+    #    help="Config path of models",
+    #)
+#
+    #parser.add_argument(
+    #    "--data_config_path",
+    #    type=str,
+    #    default="./config/data_config/DIST_config.yaml",
+    #    help="Config path of Data",
+    #)
+    #parser.add_argument("--model_name", type=str, default="STDMAE", help="Model name")
+    #parser.add_argument(
+    #    "--model_save_path",
+    #    type=str,
+    #    default="./model_states/STDMAE.pkl",
+    #    help="Model save path",
+    #)
+#
+    #parser.add_argument(
+    #    "--result_save_dir_path",
+    #    type=str,
+    #    default="./results/STDMAE",
+    #    help="Result save path",
+    #)
+    #args = parser.parse_args()
+    #main(args)
