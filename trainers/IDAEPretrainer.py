@@ -116,6 +116,7 @@ class IDAEPretrainer(AbstractTrainer):
         return data
 
     def loss_func(self, y_pred, y_true, null_val=np.nan, *args, **kwargs):
+        reconstruction_loss = kwargs.get("reconstruction_loss", None)
         # fix very small values of labels, which should be 0. Otherwise, nan detector will fail.
         y_true = torch.where(y_true < 1e-4, torch.zeros_like(y_true), y_true)
         if np.isnan(null_val):
@@ -128,7 +129,10 @@ class IDAEPretrainer(AbstractTrainer):
         loss = torch.abs(y_pred - y_true)
         loss = loss * mask
         loss = torch.where(torch.isnan(loss), torch.zeros_like(loss), loss)
-        return torch.mean(loss)
+        loss = torch.mean(loss)
+        if reconstruction_loss is not None:
+            loss += reconstruction_loss
+        return loss
 
     def train_one_epoch(self, data_loader):
         self.model.train()
@@ -141,8 +145,8 @@ class IDAEPretrainer(AbstractTrainer):
             batch_size, length, num_nodes, _ = pretrain_history_data.shape
             pretrain_history_data = self.select_input_features(pretrain_history_data)
             # feed forward
-            reconstruction, true_value = self.model(history_data=pretrain_history_data)
-            loss = self.loss_func(reconstruction, true_value)
+            reconstruction, true_value, reconstruction_loss = self.model(history_data=pretrain_history_data)
+            loss = self.loss_func(reconstruction, true_value, reconstruction_loss = reconstruction_loss)
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
@@ -183,7 +187,7 @@ class IDAEPretrainer(AbstractTrainer):
             # feed forward
             batch_size, length, num_nodes, _ = pretrain_history_data.shape
             pretrain_history_data = self.select_input_features(pretrain_history_data)
-            reconstruction_masked_tokens, label_masked_tokens = self.model(
+            reconstruction_masked_tokens, label_masked_tokens, _ = self.model(
                 history_data=pretrain_history_data
             )
             loss = self.loss_func(

@@ -5,6 +5,7 @@ from torch import nn
 from .patch import PatchEmbedding
 from .positional_encoding import PositionalEncoding
 from .transformer_layers import TransformerLayers
+from .ae import AutoEncoder
 
 
 def unshuffle(shuffled_tokens):
@@ -29,13 +30,15 @@ class STDNoise(nn.Module):
         num_heads,
         mlp_ratio,
         dropout,
-        pca_rank,
+        low_rank,
         noise_type,
         noise_intensity,
         encoder_depth,
         decoder_depth,
         spatial=False,
         mode="pre-train",
+        low_rank_method="pca",
+        ae_low_rank_hidden_list=None,
     ):
         super().__init__()
         assert mode in ["pre-train", "forecasting"], "Error mode."
@@ -43,7 +46,8 @@ class STDNoise(nn.Module):
         self.in_channel = in_channel
         self.embed_dim = embed_dim
         self.num_heads = num_heads
-        self.pca_rank = pca_rank
+        self.low_rank = low_rank
+        self.low_rank_method = low_rank_method
         self.noise_type = noise_type
         self.noise_intensity = noise_intensity
         self.encoder_depth = encoder_depth
@@ -79,6 +83,14 @@ class STDNoise(nn.Module):
 
         # # prediction (reconstruction) layer
         self.output_layer = nn.Linear(embed_dim, patch_size)
+
+        if low_rank_method == "ae":
+            dim_x = embed_dim
+            self.ae = AutoEncoder(
+                dim_X=dim_x,
+                dim_H=low_rank,
+                hidden_list=ae_low_rank_hidden_list,
+            )
 
     def pca_low_rank(self, input, q, axis=0):
         """PCA low rank approximation., use torch.pca_lowrank
@@ -118,13 +130,22 @@ class STDNoise(nn.Module):
         mean = input_tensor.mean(dim=1, keepdim=True)
         centered_tensor = input_tensor - mean
 
-        # 对张量进行批处理SVD
-        U, S, Vh = torch.linalg.svd(centered_tensor, full_matrices=False)
+        ## 对张量进行批处理SVD
+        # U, S, Vh = torch.linalg.svd(centered_tensor, full_matrices=False)
+        ## 选择前k个主成分
+        # U_k = U[:, :, :k]
+        # S_k = S[:, :k]
+        # Vh_k = Vh[:, :k, :]
 
-        # 选择前k个主成分
-        U_k = U[:, :, :k]
-        S_k = S[:, :k]
-        Vh_k = Vh[:, :k, :]
+        U_k, S_k, Vh_k = [], [], []
+        for i in range(input_tensor.size(0)):
+            U, S, Vh = torch.pca_lowrank(centered_tensor[i], q=k, center=False)
+            U_k.append(U)
+            S_k.append(S)
+            Vh_k.append(Vh.T)
+        U_k = torch.stack(U_k)
+        S_k = torch.stack(S_k)
+        Vh_k = torch.stack(Vh_k)
 
         # 进行PCA降维
         reduced_tensor = torch.bmm(U_k, torch.diag_embed(S_k))
@@ -208,19 +229,41 @@ class STDNoise(nn.Module):
                 batch_size, num_nodes, num_time, num_dim = patches.shape
                 # PCA, add noise, and then inverse PCA
                 patches = patches.transpose(1, 2)  # B, P, N, d
-                pca_reduced, U_k, S_k, Vh_k, mean = self.batch_pca(
-                    patches.reshape(-1, num_nodes, num_dim), self.pca_rank
+                if self.low_rank_method == "pca":
+                    reduced, U_k, S_k, Vh_k, mean = self.batch_pca(
+                        patches.reshape(-1, num_nodes, num_dim), self.low_rank
+                    )
+                elif self.low_rank_method == "ae":
+                    reduced = self.ae(patches, mode="rep")
+                else:
+                    raise ValueError("Unknown low rank method.")
+                reduced_noised = self.add_noise(
+                    reduced, self.noise_type, self.noise_intensity
                 )
-                pca_reduced_noised = self.add_noise(
-                    pca_reduced, self.noise_type, self.noise_intensity
+                if self.low_rank_method == "pca":
+                    reconstructed_patches = self.batch_inv_pca(
+                        reduced_noised, U_k, S_k, Vh_k, mean
+                    )
+                elif self.low_rank_method == "ae":
+                    reconstructed_patches = self.ae(reduced_noised, mode="dec")
+                else:
+                    raise ValueError("Unknown low rank method.")
+                reconstruction_loss = torch.mean((reconstructed_patches - patches) ** 2)
+
+                reconstructed_patches = reconstructed_patches.view(
+                    batch_size, num_time, num_nodes, num_dim
                 )
-                patches = self.batch_inv_pca(pca_reduced_noised, U_k, S_k, Vh_k, mean)
-                patches = patches.view(batch_size, num_time, num_nodes, num_dim)
-                patches = patches.transpose(1, 2)  # B, N, P, d
+                reconstructed_patches = reconstructed_patches.transpose(
+                    1, 2
+                )  # B, N, P, d
                 # positional embedding
-                patches, self.pos_mat = self.positional_encoding(patches)  # mask
-                patches = patches.transpose(1, 2)  # B, P, N, d
-                encoder_input = patches
+                reconstructed_patches, self.pos_mat = self.positional_encoding(
+                    reconstructed_patches
+                )  # mask
+                reconstructed_patches = reconstructed_patches.transpose(
+                    1, 2
+                )  # B, P, N, d
+                encoder_input = reconstructed_patches
                 # print(encoder_input.shape)
                 hidden_states = self.encoder(encoder_input)
                 hidden_states = self.encoder_norm(hidden_states).view(
@@ -232,19 +275,36 @@ class STDNoise(nn.Module):
                 patches = patches.transpose(-1, -2)  # B, N, P, d
                 batch_size, num_nodes, num_time, num_dim = patches.shape
                 # PCA, add noise, and then inverse PCA
-                pca_reduced, U_k, S_k, Vh_k, mean = self.batch_pca(
-                    patches.view(-1, num_time, num_dim), self.pca_rank
-                )
+                if self.low_rank_method == "pca":
+                    reduced, U_k, S_k, Vh_k, mean = self.batch_pca(
+                        patches.view(-1, num_time, num_dim), self.low_rank
+                    )
+                elif self.low_rank_method == "ae":
+                    reduced = self.ae(patches, mode="rep")
+                else:
+                    raise ValueError("Unknown low rank method.")
+
                 pca_reduced_noised = self.add_noise(
-                    pca_reduced, self.noise_type, self.noise_intensity
+                    reduced, self.noise_type, self.noise_intensity
                 )
-                patches = self.batch_inv_pca(pca_reduced_noised, U_k, S_k, Vh_k, mean)
-                patches = patches.view(
+                if self.low_rank_method == "pca":
+                    reconstructed_patches = self.batch_inv_pca(
+                        pca_reduced_noised, U_k, S_k, Vh_k, mean
+                    )
+                elif self.low_rank_method == "ae":
+                    reconstructed_patches = self.ae(pca_reduced_noised, mode="dec")
+                else:
+                    raise ValueError("Unknown low rank method.")
+                reconstruction_loss = torch.mean((reconstructed_patches - patches) ** 2)
+
+                reconstructed_patches = reconstructed_patches.view(
                     batch_size, num_nodes, num_time, num_dim
                 )  # B, N, P, d
                 # positional embedding
-                patches, self.pos_mat = self.positional_encoding(patches)  ## mask
-                encoder_input = patches
+                reconstructed_patches, self.pos_mat = self.positional_encoding(
+                    reconstructed_patches
+                )  ## mask
+                encoder_input = reconstructed_patches
                 encoder_input = encoder_input  # .transpose(-2, -3) # B, N, P, d
                 # print(encoder_input.shape)
                 hidden_states = self.encoder(encoder_input)
@@ -269,10 +329,10 @@ class STDNoise(nn.Module):
             hidden_states = self.encoder_norm(hidden_states).view(
                 batch_size, num_nodes, -1, self.embed_dim
             )  # B, N, P, d
-            return hidden_states
+            return hidden_states, None
         # encoding
 
-        return hidden_states
+        return hidden_states, reconstruction_loss
 
     def decoding(self, hidden_states):
 
@@ -314,15 +374,15 @@ class STDNoise(nn.Module):
         # feed forward
         if self.mode == "pre-train":
             # encoding
-            hidden_states = self.encoding(history_data)
+            hidden_states, reconstruction_loss = self.encoding(history_data)
             # decoding
             reconstruction = self.decoding(hidden_states)
             reconstruction = reconstruction.reshape(
                 -1, history_data.shape[1], history_data.shape[2], history_data.shape[3]
             )
-            return reconstruction, history_data
+            return reconstruction, history_data, reconstruction_loss
         else:
-            hidden_states_full, _, _ = self.encoding(history_data, noise=False)
+            hidden_states_full, _ = self.encoding(history_data, noise=False)
             return hidden_states_full
 
 

@@ -2,7 +2,7 @@
 
 # basic
 random_seed: 3407
-batch_size: 32
+batch_size: 2
 device: cuda:0
 load_checkpoint: False
 
@@ -25,7 +25,7 @@ trainer_name: STDMAETrainer
 trainer_params:
   max_epoch_num: 80
   early_stop: 10
-  skip_pretrain: True
+  skip_pretrain: False
   pretrain_model_name: STDMask
   pretrain_model_params:
     s_model_params:

@@ -36,7 +36,9 @@ STIDAE:
     num_heads: 4
     mlp_ratio: 4
     dropout: 0.1
-    pca_rank: 10
+    low_rank: 10
+    low_rank_method: 'ae'
+    ae_low_rank_hidden_list: [ 64, 32 ]
     noise_type: ['gaussian', 'uniform']
     noise_intensity: {
         'gaussian': {
