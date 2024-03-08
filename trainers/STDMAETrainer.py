@@ -85,6 +85,7 @@ class STDMAETrainer(AbstractTrainer):
             *args,
             **kwargs,
         )
+        self.adj_mx = kwargs.get("adj_mx", None)
         self.PV_index_list = PV_index_list if PV_index_list is not None else []
         self.OP_index_list = OP_index_list if OP_index_list is not None else []
         self.pretrain_s_model_save_path = self.model_save_path + "_pretrain_s_model"
@@ -117,8 +118,8 @@ class STDMAETrainer(AbstractTrainer):
     def _init_pretrain_model(self, pretrain_model_name, pretrain_model_params):
         # model
         model_class = getattr(sys.modules["models"], pretrain_model_name)
-        s_model = model_class(**pretrain_model_params["s_model_params"])
-        t_model = model_class(**pretrain_model_params["t_model_params"])
+        s_model = model_class(**pretrain_model_params["s_model_params"], adj_mx=self.adj_mx)
+        t_model = model_class(**pretrain_model_params["t_model_params"], adj_mx=self.adj_mx)
         s_model.to(self.device)
         t_model.to(self.device)
         return s_model, t_model

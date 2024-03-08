@@ -39,6 +39,7 @@ STIDAE:
     low_rank: 10
     low_rank_method: 'ae'
     ae_low_rank_hidden_list: [ 64, 32 ]
+    patch_method: 'STpatch'
     noise_type: ['gaussian', 'uniform']
     noise_intensity: {
         'gaussian': {

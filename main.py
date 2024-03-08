@@ -178,14 +178,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model_save_path",
         type=str,
-        default="./model_states/STIDAE.pkl",
+        default="./model_states/STIDAE_stpatch.pkl",
         help="Model save path",
     )
 
     parser.add_argument(
         "--result_save_dir_path",
         type=str,
-        default="./results/STIDAE",
+        default="./results/STIDAE_stpatch",
         help="Result save path",
     )
     args = parser.parse_args()
