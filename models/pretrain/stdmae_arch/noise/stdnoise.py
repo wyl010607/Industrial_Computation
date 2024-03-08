@@ -3,6 +3,7 @@ import math
 import torch
 from torch import nn
 from .patch import PatchEmbedding
+from .STpatch import STPatchEmbedding
 from .positional_encoding import PositionalEncoding
 from .transformer_layers import TransformerLayers
 from .ae import AutoEncoder
@@ -35,6 +36,8 @@ class STDNoise(nn.Module):
         noise_intensity,
         encoder_depth,
         decoder_depth,
+        patch_method="patch",
+        adj_mx=None,
         spatial=False,
         mode="pre-train",
         low_rank_method="pca",
@@ -55,19 +58,31 @@ class STDNoise(nn.Module):
         self.mlp_ratio = mlp_ratio
         self.spatial = spatial
         self.selected_feature = 0
-
+        self.patch_method = patch_method
         # norm layers
         self.encoder_norm = nn.LayerNorm(embed_dim)
         self.decoder_norm = nn.LayerNorm(embed_dim)
         self.pos_mat = None
         # encoder specifics
         # # patchify & embedding
-        self.patch_embedding = PatchEmbedding(
-            patch_size, in_channel, embed_dim, norm_layer=None
-        )
-        # # positional encoding to device
-        self.positional_encoding = PositionalEncoding(embed_dim)
+        self.adj_mx = adj_mx
+        if patch_method == "patch":
+            self.patch_embedding = PatchEmbedding(
+                patch_size, in_channel, embed_dim, norm_layer=None
+            )
+        elif patch_method == "STpatch":
+            self.patch_embedding = STPatchEmbedding(
+                patch_size,
+                in_channel,
+                embed_dim,
+                norm_layer=None,
+                adj_mx=adj_mx,
+                neighbor_simplied_num=3,
+                adjust_adj_mx=False,
+            )
 
+        # positional encoding to device
+        self.positional_encoding = PositionalEncoding(embed_dim)
         # encoder
         self.encoder = TransformerLayers(
             embed_dim, encoder_depth, mlp_ratio, num_heads, dropout

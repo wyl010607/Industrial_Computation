@@ -11,10 +11,10 @@ class STIDAE(nn.Module):
     def __init__(self, noise_args, backend_args, **kwargs):
         super().__init__()
         # iniitalize
-        self.tmae = STDNoise(**noise_args)
-        self.smae = STDNoise(**noise_args)
-        self.num_nodes = kwargs["num_nodes"]
         self.adj_mx = kwargs["adj_mx"]
+        self.tmae = STDNoise(**noise_args, adj_mx=self.adj_mx)
+        self.smae = STDNoise(**noise_args, adj_mx=self.adj_mx)
+        self.num_nodes = kwargs["num_nodes"]
         self.backend = GraphWaveNet(
             **backend_args, num_nodes=self.num_nodes, adj_mx=self.adj_mx
         )
