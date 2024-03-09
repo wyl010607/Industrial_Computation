@@ -177,7 +177,9 @@ class TSFormer(nn.Module):
         """
 
         # WCY change
-        d = 32
+        d = 32 # hyper-parameters: dimension
+        mu = 0  # hyper-parameters: mean=0
+        sigma = (1/3)**(1/2)  # hyper-parameters: standard deviation
         # Step 1: PCA降维
         # 计算协方差矩阵
         X = history_data.squeeze(-1)
@@ -190,7 +192,7 @@ class TSFormer(nn.Module):
         # print(X_pca)
 
         # Step 2: 添加高斯噪声
-        noise = torch.randn_like(X_pca)
+        noise = torch.normal(mu, sigma, X_pca.shape).cuda()
         # X_pca_noisy = X_pca
         X_pca_noisy = X_pca + noise
         # print(X_pca_noisy)
@@ -198,7 +200,7 @@ class TSFormer(nn.Module):
         # Step 3: 逆PCA
         X_reconstructed = torch.matmul(X_pca_noisy, eigenvectors.transpose(1, 2)) + X_mean
         X_reconstructed = X_reconstructed.unsqueeze(-1).permute(0, 2, 3, 1)     # B, N, 1, L * P
-        print(X_reconstructed)
+        # print(X_reconstructed)
 
 
         # reshape
