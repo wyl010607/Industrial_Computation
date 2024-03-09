@@ -175,12 +175,39 @@ class TSFormer(nn.Module):
             forecasting:
                 torch.Tensor: the output of TSFormer of the encoder with shape [B, N, L, 1].
         """
+
+        # WCY change
+        d = 32
+        # Step 1: PCA降维
+        # 计算协方差矩阵
+        X = history_data.squeeze(-1)
+        X_mean = torch.mean(X, dim=0)
+        X_centered = X - X_mean
+        cov_matrix = torch.matmul(X_centered.transpose(1, 2), X_centered) / (X.size(0) - 1)# 特征分解
+        eigenvalues, eigenvectors = torch.linalg.eigh(cov_matrix, UPLO='U')# 选择最大的d个特征值对应的特征向量
+        eigenvectors = eigenvectors[:, :, -d:]
+        X_pca = torch.matmul(X_centered, eigenvectors)  # 降维
+        # print(X_pca)
+
+        # Step 2: 添加高斯噪声
+        noise = torch.randn_like(X_pca)
+        # X_pca_noisy = X_pca
+        X_pca_noisy = X_pca + noise
+        # print(X_pca_noisy)
+
+        # Step 3: 逆PCA
+        X_reconstructed = torch.matmul(X_pca_noisy, eigenvectors.transpose(1, 2)) + X_mean
+        X_reconstructed = X_reconstructed.unsqueeze(-1).permute(0, 2, 3, 1)     # B, N, 1, L * P
+        print(X_reconstructed)
+
+
         # reshape
         history_data = history_data.permute(0, 2, 3, 1)     # B, N, 1, L * P
         # feed forward
         if self.mode == "pre-train":
             # encoding
-            hidden_states_unmasked, unmasked_token_index, masked_token_index = self.encoding(history_data)
+            # hidden_states_unmasked, unmasked_token_index, masked_token_index = self.encoding(history_data)
+            hidden_states_unmasked, unmasked_token_index, masked_token_index = self.encoding(X_reconstructed)  # WCY change
             # decoding
             reconstruction_full = self.decoding(hidden_states_unmasked, masked_token_index)
             # for subsequent loss computing
