@@ -148,6 +148,8 @@ class CTPGNNDataPreprocessor(AbstractDataPreprocessor):
             self.adj_mx = torch.from_numpy(self.adj_mx).float().cuda()
             self.update_trainer_params["adj_mx"] = self.adj_mx
         self.update_trainer_params["forecast_len"] = self.forecast_len
+        self.update_trainer_params["history_len"] = self.history_len
+        self.update_trainer_params["num_route"] = self.data.shape[1]
 
         self.update_model_params["adj_mx"] = self.adj_mx
         self.update_model_params["history_len"] = self.history_len

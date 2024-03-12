@@ -8,7 +8,7 @@ import torch.fft as fft
 import numpy as np
 from einops import rearrange, reduce
 
-from models.FSNET.fsnet_ import DilatedConvEncoder
+from models.CFSNET.fsnet_ import DilatedConvEncoder
 
 
 
@@ -56,6 +56,7 @@ class TSEncoder(nn.Module):
         nan_mask = ~x.isnan().any(axis=-1)
         x[~nan_mask] = 0
         x = self.input_fc(x)  # B x T x Ch
+        
         # generate & apply mask
         if mask is None:
             if self.training:

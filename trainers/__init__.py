@@ -5,6 +5,8 @@ from .SoftSensorTrainer import SoftSensorTrainer
 from .TPGNNTrainer import TPGNNTrainer
 from .CTPGNNTrainer import CTPGNNTrainer
 from .FSNETTrainer import FSNETTrainer
+from .CFSNETTrainer import CFSNETTrainer
+from .CTPGNN_SANTrainer import CTPGNN_SANTrainer
 
 __all__ = [
     "AbstractTrainer",
@@ -12,6 +14,8 @@ __all__ = [
     "SAETrainer",
     "SoftSensorTrainer",
     "TPGNNTrainer",
-    "CTPGNNTrainer"
-    "FSNETTrainer"
+    "CTPGNNTrainer",
+    "FSNETTrainer",
+    "CFSNETTrainer",
+    "CTPGNN_SANTrainer"
 ]

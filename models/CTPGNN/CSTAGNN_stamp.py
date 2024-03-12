@@ -172,6 +172,16 @@ class CSTAGNN_stamp(nn.Module):
         self.a = a
         self.n_mask = n_mask
         self.n_c = n_c
+        #self.apply(self.weights_init)
+
+    '''def weights_init(self, m):
+        try:
+            if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight, gain=0.5)
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+        except:
+            pass'''
 
     def forward(self, src, time_stamp, trg):
         src = src.permute(0, 2, 1, 3)

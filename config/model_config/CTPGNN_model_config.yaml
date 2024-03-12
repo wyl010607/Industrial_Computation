@@ -11,6 +11,7 @@ CSTAGNN_stamp:
   adj_mx: None
 
   # expand attr by conv
+
   CE:
     use: True
     kernel_size: 1

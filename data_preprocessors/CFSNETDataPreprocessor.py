@@ -1,12 +1,17 @@
+import datetime
+
 import numpy as np
 import torch
-from sklearn.preprocessing import StandardScaler as sklearn_StandardScaler
+
 from .abs import AbstractDataPreprocessor
 import pandas as pd
+from sklearn.preprocessing import StandardScaler as sklearn_StandardScaler
 from utils.timefeatures import time_features
 from utils.tools import StandardScaler
 
-class ETTh2DataPreprocessor(AbstractDataPreprocessor):
+
+
+class CFSNETDataPreprocessor(AbstractDataPreprocessor):
     """
     Data Preprocessor for DCS data.
     """
@@ -14,12 +19,14 @@ class ETTh2DataPreprocessor(AbstractDataPreprocessor):
     def __init__(
         self,
         data_path,
+        process_vars_list=None,
+        control_vars_list=None,
+        disturb_vars_list=None,
         *args,
         **kwargs
     ):
         """
         Initialize the DCS Data Preprocessor.
-
 
         Parameters
         ----------
@@ -49,6 +56,15 @@ class ETTh2DataPreprocessor(AbstractDataPreprocessor):
         self.timeenc = kwargs.get("timeenc")
         self.freq = kwargs.get("freq")
 
+        self.process_vars_list = (
+            process_vars_list if process_vars_list is not None else []
+        )
+        self.control_vars_list = (
+            control_vars_list if control_vars_list is not None else []
+        )
+        self.disturb_vars_list = (
+            disturb_vars_list if disturb_vars_list is not None else []
+        )
         self.load_data()
 
 
@@ -59,31 +75,41 @@ class ETTh2DataPreprocessor(AbstractDataPreprocessor):
         This method loads the data, time stamps, and variable index dictionary
         from a file at `self.data_path`.
         """
-        border1s = [0, 4 * 30 * 24 - self.history_len, 5 * 30 * 24 - self.history_len]
-        border2s = [4 * 30 * 24, 5 * 30 * 24, 20 * 30 * 24]
-        df_raw = pd.read_csv(self.data_path)
-        cols_data = df_raw.columns[1:]
-        df_data = df_raw[cols_data]
+        data = np.load(self.data_path, allow_pickle=True)
+        df_data, df_stamp, self.vars_index_dict = (
+            pd.DataFrame(data["data_array"]),
+            data["time_stamp_array"].tolist(),
+            data["vars_index_dict"].tolist(),
+        )
+
 
         self.scaler = StandardScaler()
-        train_data = df_data[border1s[0]:border2s[0]]
+        train_data = df_data[:int(self.train_ratio * len(df_data))]
         self.scaler.fit(train_data.values)
         self.data = self.scaler.transform(df_data.values)
 
+        df_stamp = pd.DataFrame(df_stamp, columns=['date'])
+        def timestamp2datetime(timestamp):
+            return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
 
-        train_df_stamp = df_raw[['date']][border1s[0]:border2s[0]]
+        df_stamp = pd.DataFrame(df_stamp['date'].map(timestamp2datetime))
 
+        total_length = len(df_data)
+        border1s = [0, int(self.train_ratio * total_length) - self.history_len, int((self.train_ratio + self.valid_ratio) * total_length) - self.history_len]
+        border2s = [int(self.train_ratio * total_length), int((self.train_ratio + self.valid_ratio) * total_length), total_length]
+
+        train_df_stamp = df_stamp[['date']][border1s[0]:border2s[0]]
         train_df_stamp['date'] = pd.to_datetime(train_df_stamp.date)
         train_date_stamp = time_features(train_df_stamp, timeenc=self.timeenc)
         date_scaler = sklearn_StandardScaler().fit(train_date_stamp)
 
-        data_stamp =[]
+
+        data_stamp = []
         for i in range(3):
-            df_stamp = df_raw[['date']] [border1s[i]:border2s[i]]
-            df_stamp['date'] = pd.to_datetime(df_stamp.date)
-            data_stamp_temp = time_features(df_stamp, timeenc=self.timeenc, freq=self.freq)
+            df_stamp_temp = df_stamp[['date']][border1s[i]:border2s[i]]
+            df_stamp_temp['date'] = pd.to_datetime(df_stamp_temp.date)
+            data_stamp_temp = time_features(df_stamp_temp, timeenc=self.timeenc, freq=self.freq)
             data_stamp_temp = date_scaler.transform(data_stamp_temp)
-            print(data_stamp_temp.shape)
             data_stamp.append(data_stamp_temp)
 
         self.data_stamp = data_stamp
@@ -103,12 +129,37 @@ class ETTh2DataPreprocessor(AbstractDataPreprocessor):
         """
         self.update_dataset_params["history_len"] = self.history_len
         self.update_dataset_params["forecast_len"] = self.forecast_len
+
+
+        indices = [
+            self.vars_index_dict[var]
+            for var in (
+                self.process_vars_list + self.control_vars_list + self.disturb_vars_list
+            )
+        ]
+        preprocessed_data = self.data[:, indices]
+
+        self.update_trainer_params = {
+            "PV_index_list": [
+                self.vars_index_dict[var] for var in self.process_vars_list
+            ],
+            "OP_index_list": [
+                self.vars_index_dict[var] for var in self.control_vars_list
+            ],
+            "DV_index_list": [
+                self.vars_index_dict[var] for var in self.disturb_vars_list
+            ],
+        }
+
+        # load adjacency matrix
+        self.update_dataset_params["history_len"] = self.history_len
+        self.update_dataset_params["forecast_len"] = self.forecast_len
         self.update_dataset_params["data_stamp"] = self.data_stamp
 
         self.update_trainer_params["forecast_len"] = self.forecast_len
 
         self.update_model_params["forecast_len"] = self.forecast_len
-        return self.data
+        return preprocessed_data
 
     def split_data(self, preprocessed_data):
         """
@@ -124,16 +175,12 @@ class ETTh2DataPreprocessor(AbstractDataPreprocessor):
         tuple of np.ndarray
             A tuple containing the training, validation, and test data arrays, respectively.
         """
-        '''total_length = len(preprocessed_data)
+        total_length = len(preprocessed_data)
         train_end = int(self.train_ratio * total_length)
         valid_end = int((self.train_ratio + self.valid_ratio) * total_length)
 
         train_data = preprocessed_data[:train_end]
         valid_data = preprocessed_data[train_end:valid_end]
-        test_data = preprocessed_data[valid_end:]'''
-
-        train_data = preprocessed_data[: 4*30*24]
-        valid_data = preprocessed_data[4*30*24 - self.history_len:5*30*24]
-        test_data = preprocessed_data[5*30*24 - self.history_len:20*30*24]
+        test_data = preprocessed_data[valid_end:]
 
         return train_data, valid_data, test_data

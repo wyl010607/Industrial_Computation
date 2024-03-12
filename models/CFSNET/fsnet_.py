@@ -3,6 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 import numpy as np
 import pdb
+
 from itertools import chain
 
 def normalize(W):
@@ -68,7 +69,6 @@ class SamePadConv(nn.Module):
         for p in c_iter:
             yield p
 
-
     def store_grad(self):
         #print('storing grad')
         grad = self.conv.weight.grad.data.clone()
@@ -81,8 +81,7 @@ class SamePadConv(nn.Module):
             if e < -self.tau:
                 self.trigger = 1
         self.grads = self.gamma * self.grads + (1-self.gamma) * grad
-
-    #@profile
+        
     def fw_chunks(self):
         x = self.grads.view(self.n_chunks, -1)
         rep = self.controller(x)
@@ -129,7 +128,6 @@ class SamePadConv(nn.Module):
        
         return w.unsqueeze(0) ,b.view(-1),f
 
-
     def forward(self, x):
         w,b,f = self.fw_chunks()
         d0, d1 = self.conv.weight.shape[1:]
@@ -167,7 +165,8 @@ class ConvBlock(nn.Module):
                 self.conv2.controller.parameters(), self.conv2.calib_w.parameters(), 
                 self.conv2.calib_b.parameters(), self.conv2.calib_f.parameters())
 
-        return c_iter
+        return c_iter 
+       
 
 
     def forward(self, x):

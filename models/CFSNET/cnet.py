@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from models.FSNET.fsnet import TSEncoder
+from models.CFSNET.fsnet import TSEncoder
 
 
 class TS2VecEncoderWrapper(nn.Module):
@@ -14,7 +14,7 @@ class TS2VecEncoderWrapper(nn.Module):
         return self.encoder(input, mask=self.mask)[:, -1]
 
 
-class net(nn.Module):
+class cnet(nn.Module):
     def __init__(self, enc_in, c_out, forecast_len, device = "cuda:0"):
         super().__init__()
         self.device = device
@@ -24,15 +24,15 @@ class net(nn.Module):
                             depth=10)
         self.encoder = TS2VecEncoderWrapper(encoder, mask='all_true').to(self.device)
         self.dim = c_out * forecast_len
-
+        self.forecast_len = forecast_len
         # self.regressor = nn.Sequential(nn.Linear(320, 320), nn.ReLU(), nn.Linear(320, self.dim)).to(self.device)
-        self.regressor = nn.Linear(320, self.dim).to(self.device)
-
+        self.regressor = nn.Linear(320, c_out).to(self.device)
 
     def forward(self, x):
+        x = x.squeeze(3)
         rep = self.encoder(x)
         y = self.regressor(rep)
-        return y
+        return y.unsqueeze(1).unsqueeze(3)
 
     def store_grad(self):
         for name, layer in self.encoder.named_modules():

@@ -16,10 +16,12 @@ from utils import scaler
 from torch.utils.data import DataLoader
 
 
+
 def load_config(data_path):
     with open(data_path, "r", encoding="utf-8") as f:
         config = yaml.safe_load(f)
     return config
+
 
 
 def main(args):
@@ -38,7 +40,7 @@ def main(args):
     random_seed = train_config["random_seed"]
     device = torch.device(train_config["device"])
     batch_size = train_config["batch_size"]
-    if train_config.get("test_bsz", None) !=None :
+    if train_config.get("test_bsz", None) != None:
         online_batch_size = train_config["test_bsz"]
     else:
         online_batch_size = batch_size
@@ -72,6 +74,7 @@ def main(args):
     train_data = scaler.transform(train_data)
     valid_data = scaler.transform(valid_data)
     test_data = scaler.transform(test_data)
+
 
     # dataset
     dataset_class = getattr(sys.modules["datasets"], data_config["dataset_name"])
@@ -162,7 +165,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--train_config_path",
         type=str,
-        default="./config/train_config/CTPGNN_train_config.yaml",
+        default="./config/train_config/CTPGNN_SAN_train_config.yaml",
         help="Config path of Trainer",
     )
 
@@ -183,16 +186,15 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model_save_path",
         type=str,
-        default="./model_states/CTPGNN/CTPGNN2.pkl",
+        default="./model_states/CTPGNN_SAN/CTPGNN_SAN3.pkl",
         help="Model save path",
     )
 
     parser.add_argument(
         "--result_save_dir_path",
         type=str,
-        default="./results/CTPGNN2",
+        default="./results/CTPGNN_SAN3",
         help="Result save path",
     )
     args = parser.parse_args()
     main(args)
-

@@ -19,12 +19,11 @@ scheduler_params:
   gamma: 0.3
 
 # Trainer
-trainer_name: FSNETTrainer
+trainer_name: CFSNETTrainer
 trainer_params:
   resume: False
   max_epoch_num: 6
   early_stop_patience: 3
-  enable_early_stop: True
   train_FSNET_epochs: 6
   inverse: False
   lradj: 'type1'

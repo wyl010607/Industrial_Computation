@@ -16,7 +16,7 @@ from trainers.abs import AbstractTrainer
 import utils.metrics as metrics_module
 
 
-class FSNETTrainer(AbstractTrainer):
+class CFSNETTrainer(AbstractTrainer):
     """
     A Trainer subclass for soft sensor data.
     """
@@ -39,8 +39,8 @@ class FSNETTrainer(AbstractTrainer):
         enable_early_stop=False,
         early_stop_patience=5,
         early_stop_min_is_best=True,
-        input_index_list=None,
-        output_index_list=None,
+        PV_index_list=None,
+        OP_index_list=None,
         *args,
         **kwargs,
     ):
@@ -83,17 +83,18 @@ class FSNETTrainer(AbstractTrainer):
             enable_early_stop,
             early_stop_patience,
             early_stop_min_is_best,
-            input_index_list,
-            output_index_list,
             *args,
             **kwargs,
         )
+        self.PV_index_list = PV_index_list if PV_index_list is not None else []
+        self.OP_index_list = OP_index_list if OP_index_list is not None else []
         self.forecast_len = forecast_len
         self.online = online_learning
         self.n_inner = n_inner
         self.early_stop_patience = early_stop_patience
         self.lradj = lradj
         self.learning_rate = learning_rate
+        self._check_model_is_single_step()
 
     def loss_func(self, y_pred, y_true, *args, **kwargs):
         loss = torch.nn.MSELoss()(y_pred, y_true)
@@ -102,10 +103,27 @@ class FSNETTrainer(AbstractTrainer):
     def train_one_epoch(self, data_loader, *args, **kwargs):
         self.model.train()
         total_loss = 0
-        for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(data_loader):
+
+        for  batch_x, batch_y, batch_x_mark, batch_y_mark in tqdm(data_loader):
             self.optimizer.zero_grad()
-            pred, true = self._process_one_batch(batch_x, batch_y, batch_x_mark, batch_y_mark)
-            loss = self.loss_func(pred, true)
+            batch_x = batch_x.type(torch.float32).to(self.device)
+            batch_y = batch_y.type(torch.float32).to(self.device)
+            batch_x_mark = batch_x_mark.type(torch.float32).to(self.device)
+            batch_y_mark = batch_y_mark.type(torch.float32).to(self.device)
+            sample_x = batch_x
+            sample_x_mark = batch_x_mark
+            muti_step_pred = torch.zeros_like(batch_y[:, :, self.PV_index_list, :])
+            for j in range(batch_y.shape[1]):
+                pred, true = self._process_one_batch(batch_x, batch_y, batch_x_mark, batch_y_mark[:, j: j + 1, :])
+                muti_step_pred[:, j: j + 1, :, :] = pred[
+                                                    :, :, self.PV_index_list, :
+                                                    ]
+                sample_x = torch.cat((sample_x[:, 1:, :, :], pred), dim=1)
+                sample_x_mark = torch.cat((sample_x_mark[:, 1:, :], batch_y_mark[:, j: j + 1]), dim=1)
+                sample_x[:, -1:, self.OP_index_list, :] = batch_y[
+                                                          :, j: j + 1, self.OP_index_list, :
+                                                          ]
+            loss = self.loss_func(muti_step_pred, batch_y[:, :, self.PV_index_list, :])
             loss.backward()
             self.optimizer.step()
             self.model.store_grad()
@@ -114,33 +132,11 @@ class FSNETTrainer(AbstractTrainer):
 
 
     def _process_one_batch(self, batch_x, batch_y, batch_x_mark, batch_y_mark, mode='train'):
-        if mode == 'test' and self.online != 'none':
-            return self._ol_one_batch(batch_x, batch_y, batch_x_mark, batch_y_mark)
 
-        x = torch.cat([batch_x.float(), batch_x_mark.float()], dim=-1).to(self.device)
+        x = torch.cat([batch_x.float(), batch_x_mark.float().unsqueeze(3)], dim=-2).to(self.device)
         batch_y = batch_y.float()
         outputs = self.model(x)
-        f_dim = 0
-        batch_y = batch_y[:, -self.forecast_len:, f_dim:].to(self.device)
-        return outputs, rearrange(batch_y, 'b t d -> b (t d)')
-
-
-    def _ol_one_batch(self, batch_x, batch_y, batch_x_mark, batch_y_mark):
-        true = rearrange(batch_y, 'b t d -> b (t d)').float().to(self.device)
-
-        x = torch.cat([batch_x.float(), batch_x_mark.float()], dim=-1).to(self.device)
-        batch_y = batch_y.float()
-        for _ in range(self.n_inner):
-            outputs = self.model(x)
-            loss = self.loss_func(outputs, true)
-            loss.backward()
-            self.optimizer.step()
-            self.model.store_grad()
-            self.optimizer.zero_grad()
-
-        f_dim = 0
-        batch_y = batch_y[:, -self.forecast_len:, f_dim:].to(self.device)
-        return outputs, rearrange(batch_y, 'b t d -> b (t d)')
+        return outputs, batch_y
 
 
     def train(
@@ -205,6 +201,7 @@ class FSNETTrainer(AbstractTrainer):
                 print("Early stopping")
                 break
 
+
             adjust_learning_rate(self.optimizer, epoch + 1, self.lradj, self.learning_rate)
 
         copyfile(tmp_state_save_path, self.model_save_path)
@@ -217,16 +214,31 @@ class FSNETTrainer(AbstractTrainer):
         self.model.eval()
         total_loss = []
         for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(vali_loader):
-            pred, true = self._process_one_batch(batch_x, batch_y, batch_x_mark, batch_y_mark, mode='vali')
-            loss = self.loss_func(pred.detach().cpu(), true.detach().cpu())
+            batch_x = batch_x.type(torch.float32).to(self.device)
+            batch_y = batch_y.type(torch.float32).to(self.device)
+            batch_x_mark = batch_x_mark.type(torch.float32).to(self.device)
+            batch_y_mark = batch_y_mark.type(torch.float32).to(self.device)
+            sample_x = batch_x
+            sample_x_mark = batch_x_mark
+            muti_step_pred = torch.zeros_like(batch_y[:, :, self.PV_index_list, :])
+            for j in range(batch_y.shape[1]):
+                pred, true = self._process_one_batch(batch_x, batch_y, batch_x_mark, batch_y_mark[:, j: j + 1, :])
+                muti_step_pred[:, j: j + 1, :, :] = pred[
+                                                    :, :, self.PV_index_list, :
+                                                    ]
+                sample_x = torch.cat((sample_x[:, 1:, :, :], pred), dim=1)
+                sample_x_mark = torch.cat((sample_x_mark[:, 1:, :], batch_y_mark[:, j: j + 1]), dim=1)
+                sample_x[:, -1:, self.OP_index_list, :] = batch_y[
+                                                          :, j: j + 1, self.OP_index_list, :
+                                                          ]
+            loss = self.loss_func(muti_step_pred, batch_y[:, :, self.PV_index_list, :])
             total_loss.append(loss.item())
         total_loss = np.average(total_loss)
         self.model.train()
         return total_loss
 
-
     def test(self, test_data_loader, metrics=("mae", "rmse", "mape"), *args, **kwargs):
-        self.model.load_state_dict(torch.load(self.model_save_path)) #之前没写
+        self.model.load_state_dict(torch.load(self.model_save_path))
         self.model.eval()
         if self.online == 'regressor':
             for p in self.model.encoder.parameters():
@@ -234,33 +246,77 @@ class FSNETTrainer(AbstractTrainer):
         elif self.online == 'none':
             for p in self.model.parameters():
                 p.requires_grad = False
-        preds = []
-        trues = []
-        maes, mses, rmses, mapes = [], [], [], []
+        y_pred = []
+        y_true = []
+        mae = []
+        mse = []
+        mape = []
+        pred_step = test_data_loader.dataset.forecast_len
         for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(tqdm(test_data_loader)):
-            pred, true = self._process_one_batch( batch_x, batch_y, batch_x_mark, batch_y_mark, mode='test')
+            batch_x = batch_x.type(torch.float32).to(self.device)
+            batch_y = batch_y.type(torch.float32).to(self.device)
+            batch_x_mark = batch_x_mark.type(torch.float32).to(self.device)
+            batch_y_mark = batch_y_mark.type(torch.float32).to(self.device)
+            sample_x = batch_x
+            sample_x_mark = batch_x_mark
+            muti_step_pred = torch.zeros_like(batch_y[:, :, self.PV_index_list, :])
+            for j in range(batch_y.shape[1]):
+                pred, true = self._process_one_batch(batch_x, batch_y, batch_x_mark, batch_y_mark[:, j: j + 1, :], mode='test')
+                muti_step_pred[:, j: j + 1, :, :] = pred[
+                                                    :, :, self.PV_index_list, :
+                                                    ]
+                sample_x = torch.cat((sample_x[:, 1:, :, :], pred), dim=1)
+                sample_x_mark = torch.cat((sample_x_mark[:, 1:, :], batch_y_mark[:, j: j + 1]), dim=1)
+                sample_x[:, -1:, self.OP_index_list, :] = batch_y[
+                                                          :, j: j + 1, self.OP_index_list, :
+                                                          ]
+            loss = self.loss_func(muti_step_pred, batch_y[:, :, self.PV_index_list, :])
+            loss.backward()
+            self.optimizer.step()
+            self.model.store_grad()
+            self.optimizer.zero_grad()
 
-            preds.append(pred.detach().cpu())
-            trues.append(true.detach().cpu())
-            mae, mse, rmse, mape = metric(pred.detach().cpu().numpy(), true.detach().cpu().numpy())
-            maes.append(mae)
-            mses.append(mse)
-            rmses.append(rmse)
-            mapes.append(mape)
+            y_true = self.scaler.inverse_transform(
+                batch_y[:, :, self.PV_index_list, :].cpu().detach().numpy().reshape(-1, len(self.PV_index_list)),
+                index=self.PV_index_list,
+            )
+            y_pred = self.scaler.inverse_transform(
+                muti_step_pred.cpu().detach().numpy().reshape(-1, len(self.PV_index_list)),
+                index=self.PV_index_list,
+            )
 
-        preds = torch.cat(preds, dim=0).numpy()
-        trues = torch.cat(trues, dim=0).numpy()
-        print('test shape:', preds.shape, trues.shape)
+            mae.append( y_true - y_pred)
+            mse.append(((y_true - y_pred) ** 2).mean())
 
-        MAE, MSE, RMSE, MAPE = cumavg(maes), cumavg(mses), cumavg(rmses), cumavg(mapes)
-        mae, mse, rmse, mape = MAE[-1], MSE[-1], RMSE[-1], MAPE[-1]
-        print('mse:{}, mae:{}'.format(mse, mae))
+            non_zero_mask = y_true != 0
+            y_true_masked = y_true[non_zero_mask]
+            y_pred_masked = y_pred[non_zero_mask]
+            mape.append(np.mean(np.abs((y_true_masked - y_pred_masked) / y_true_masked)) * 100)
+            y_true.append(batch_y[:, :, self.PV_index_list, :])
+            y_pred.append(muti_step_pred)
+
+
+
+        y_true = self.scaler.inverse_transform(
+            torch.cat(y_true, dim=0).cpu().detach().numpy().reshape(-1, len(self.PV_index_list)),
+            index=self.PV_index_list,
+        )
+        y_pred = self.scaler.inverse_transform(
+            torch.cat(y_pred, dim=0).cpu().detach().numpy().reshape(-1, len(self.PV_index_list)),
+            index=self.PV_index_list,
+        )
+        
+        eval_results = self.get_eval_result(y_pred, y_true, metrics)
+        print("Evaluate result: ", end=" ")
+        for metric_name, eval_ret in zip(metrics, eval_results):
+            print("{}:  {:.4f}".format(metric_name.upper(), eval_ret), end="  ")
+        print()
+        # reshape y_pred to [batch_size * len(data_loader), time_step, feature_size]
         test_result = {}
-        test_result['mae'] = mae
-        test_result['mse'] = mse
-        test_result['rmse'] = rmse
-        test_result['mape'] = mape
-        return test_result, preds, trues
+        for metric_name, metric_eval in zip(metrics, eval_results):
+            test_result[metric_name] = metric_eval
+        #return test_result, y_pred.reshape(-1, pred_step, len(self.PV_index_list), 1), y_true.reshape(-1, pred_step, len(self.PV_index_list), 1),
+        return test_result, None, None
 
     def _save_epoch_result(self, epoch_result_list):
         """
@@ -280,3 +336,20 @@ class FSNETTrainer(AbstractTrainer):
     def evaluate(self, data_loader, metrics, *args, **kwargs):
 
         return 0
+
+
+    def _check_model_is_single_step(self):
+        """
+        Check if the model is a single step forecasting model. If not, try to set the forecast_len to 1.
+        """
+        if not hasattr(self.model, "forecast_len"):
+            raise AttributeError(
+                "The model does not have the attribute 'forecast_len'."
+            )
+        if self.model.forecast_len != 1:
+            warnings.warn(
+                "The forecast_len of the model is not 1, it will be set to 1."
+            )
+            self.model.dim = 37
+
+        return self.model

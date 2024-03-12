@@ -160,4 +160,4 @@ def time_features(dates, timeenc=1, freq='h'):
             dt.dayofyear.to_numpy(),
             dt.month.to_numpy(),
             dt.isocalendar().week.to_numpy(), #改
-        ], axis=1).astype(np.float)
+        ], axis=1).astype(float)#好像是python版本问题，不能是np.float
