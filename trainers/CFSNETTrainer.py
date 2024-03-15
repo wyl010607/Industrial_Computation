@@ -248,9 +248,6 @@ class CFSNETTrainer(AbstractTrainer):
                 p.requires_grad = False
         y_pred = []
         y_true = []
-        mae = []
-        mse = []
-        mape = []
         pred_step = test_data_loader.dataset.forecast_len
         for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(tqdm(test_data_loader)):
             batch_x = batch_x.type(torch.float32).to(self.device)
@@ -276,26 +273,8 @@ class CFSNETTrainer(AbstractTrainer):
             self.model.store_grad()
             self.optimizer.zero_grad()
 
-            y_true = self.scaler.inverse_transform(
-                batch_y[:, :, self.PV_index_list, :].cpu().detach().numpy().reshape(-1, len(self.PV_index_list)),
-                index=self.PV_index_list,
-            )
-            y_pred = self.scaler.inverse_transform(
-                muti_step_pred.cpu().detach().numpy().reshape(-1, len(self.PV_index_list)),
-                index=self.PV_index_list,
-            )
-
-            mae.append( y_true - y_pred)
-            mse.append(((y_true - y_pred) ** 2).mean())
-
-            non_zero_mask = y_true != 0
-            y_true_masked = y_true[non_zero_mask]
-            y_pred_masked = y_pred[non_zero_mask]
-            mape.append(np.mean(np.abs((y_true_masked - y_pred_masked) / y_true_masked)) * 100)
             y_true.append(batch_y[:, :, self.PV_index_list, :])
             y_pred.append(muti_step_pred)
-
-
 
         y_true = self.scaler.inverse_transform(
             torch.cat(y_true, dim=0).cpu().detach().numpy().reshape(-1, len(self.PV_index_list)),
@@ -316,7 +295,7 @@ class CFSNETTrainer(AbstractTrainer):
         for metric_name, metric_eval in zip(metrics, eval_results):
             test_result[metric_name] = metric_eval
         #return test_result, y_pred.reshape(-1, pred_step, len(self.PV_index_list), 1), y_true.reshape(-1, pred_step, len(self.PV_index_list), 1),
-        return test_result, None, None
+        return test_result, y_pred, y_true
 
     def _save_epoch_result(self, epoch_result_list):
         """
