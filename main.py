@@ -174,7 +174,7 @@ if __name__ == "__main__":
         default="./config/data_config/DIST_config.yaml",
         help="Config path of Data",
     )
-    parser.add_argument("--model_name", type=str, default="ASTGCN", help="Model name")
+    parser.add_argument("--model_name", type=str, default="Crossformer", help="Model name")
     parser.add_argument(
         "--model_save_path",
         type=str,
