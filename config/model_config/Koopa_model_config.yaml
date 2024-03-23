@@ -1,0 +1,11 @@
+Koopa:
+  enc_in: 21
+  dec_in: 21
+  c_out: 21
+  dropout: 0.05
+  seg_len: 48
+  num_blocks: 3
+  dynamic_dim: 128
+  hidden_dim: 64
+  hidden_layers: 2
+  multistep: True

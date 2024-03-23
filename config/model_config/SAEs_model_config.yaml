@@ -1,0 +1,2 @@
+StackedAutoEncoder:
+  hidden_dim_list: [64, 32, 16]

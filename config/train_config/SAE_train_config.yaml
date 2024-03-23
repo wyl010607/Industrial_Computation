@@ -1,0 +1,30 @@
+#This is an example of train_config.yaml
+
+# basic
+random_seed: 3407
+batch_size: 128
+device: cuda:0
+load_checkpoint: False
+
+# Optimizer
+optimizer_name: Adam
+optimizer_params:
+  lr: 0.001
+  weight_decay: 0.0001
+
+# Scheduler
+scheduler_name: MultiStepLR
+scheduler_params:
+  milestones: [5, 20, 40, 70]
+  gamma: 0.3
+
+# Trainer
+trainer_name: SAETrainer
+trainer_params:
+  max_epoch_num: 80
+  early_stop: 10
+  train_AE_epochs: 80
+  train_AE_optimizer_name: Adam
+  train_AE_optimizer_params:
+    lr: 0.001
+    weight_decay: 0.0001

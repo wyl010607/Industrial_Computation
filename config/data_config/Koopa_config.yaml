@@ -1,0 +1,34 @@
+# This is an example of data_config.yaml
+
+# data_preprocessors
+data_preprocessor_name: KoopaDataPreprocessor
+data_preprocessor_params:
+  data_path: data/weather/weather.csv
+  history_len: 96
+  forecast_len: 48
+  label_len: 48
+  eps: 0.1
+  features: M
+  target: OT
+  timeenc: 1
+  freq: h
+
+
+
+
+# Scaler
+scaler_name: StandardScaler
+scaler_params:
+  mean: 0
+  std: 1
+
+# Dataset
+dataset_name: KoopaDataset
+dataset_params: {}
+
+
+dataloader_params:
+  shuffle: True
+  num_workers: 0
+  pin_memory: True
+  drop_last: True
