@@ -98,9 +98,9 @@ class IterMultiStepForecastTrainer(AbstractTrainer):
                 sample_x[:, -1:, self.OP_index_list, :] = y[
                     :, i : i + 1, self.OP_index_list, :
                 ]
-                loss = self.loss_func(
-                    muti_step_pred, y[:, :, self.PV_index_list, :]
-                )
+            loss = self.loss_func(
+                muti_step_pred, y[:, :, self.PV_index_list, :]
+            )
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
