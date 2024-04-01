@@ -1,0 +1,32 @@
+# This is an example of data_config.yaml
+
+# data_preprocessors
+data_preprocessor_name: PEMSDataPreprocessor
+data_preprocessor_params:
+  data_path: datasets/raw_data/PEMS03/PEMS03.npz
+  adj_mx_path: datasets/raw_data/PEMS03/adj_PEMS03.pkl
+  distance_adj_mx_path: datasets/raw_data/PEMS03/distance_adj_PEMS03.pkl
+  steps_pre_day: 288
+  train_ratio: 0.6
+  valid_ratio: 0.2
+  add_feature_time_of_day: True
+  add_feature_day_of_week: True
+
+
+# Scaler
+scaler_name: StandardScaler
+scaler_params:
+  mean: 0
+  std: 1
+
+# Dataset
+dataset_name: MultiStepForecastDataset
+dataset_params:
+  history_len: 12
+  forecast_len: 12
+
+dataloader_params:
+  shuffle: False
+  num_workers: 0
+  pin_memory: True
+  drop_last: False

@@ -1,0 +1,33 @@
+# This is an example of data_config.yaml
+
+# data_preprocessors
+data_preprocessor_name: ETTDataPreprocessor
+data_preprocessor_params:
+  data_path: data/regression_dataset/ETTm1/ETTm1.csv
+  adj_mx_path: None
+  train_ratio: 0.6
+  valid_ratio: 0.2
+  steps_pre_day: 96
+  add_feature_time_of_day: True
+  add_feature_day_of_week: True
+  add_feature_day_of_month: True
+  add_feature_day_of_year: True
+
+
+# Scaler
+scaler_name: StandardScaler
+scaler_params:
+  mean: 0
+  std: 1
+
+# Dataset
+dataset_name: MultiStepForecastDataset
+dataset_params:
+  history_len: 96
+  forecast_len: 336
+
+dataloader_params:
+  shuffle: False
+  num_workers: 0
+  pin_memory: True
+  drop_last: False
