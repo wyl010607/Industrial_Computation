@@ -77,7 +77,6 @@ class SamePadConv(nn.Module):
         self.f_grads = self.f_gamma * self.f_grads + (1-self.f_gamma) * grad
         if not self.training: 
             e = self.cos(self.f_grads, self.grads)
-            
             if e < -self.tau:
                 self.trigger = 1
         self.grads = self.gamma * self.grads + (1-self.gamma) * grad

@@ -193,4 +193,7 @@ class CSTAGNN_stamp(nn.Module):
         dec_input = self.trg_pro(trg, enc_output)
         dec_output = self.decoder(dec_input, enc_output)
         dec_output = self.dec_rdu(dec_output)
-        return dec_output.permute(0, 2, 1, 3)
+
+        A = self.encoder.layer_stack[0].stgc.r1 @ self.encoder.layer_stack[0].stgc.r1.T
+        #A_loss = (((A**2).sum())**0.5-self.n_c**0.5)**2
+        return dec_output.permute(0, 2, 1, 3)#, A_loss

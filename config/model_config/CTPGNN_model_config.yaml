@@ -1,6 +1,6 @@
-CSTAGNN_stamp:
+CSTAGNN_G_stamp:
   n_layer: 1
-  n_attr: 32
+  n_attr: 64
   n_hid: 256
   reg_A: 0.0001
   circle: 288 #12*24
@@ -37,7 +37,7 @@ CSTAGNN_stamp:
     d_v: 32
     drop_prob: 0.2
 
-  # TPGNN polynomial order
+  # TPGNN1 polynomial order
   STstamp:
     use: True
     kt: 3

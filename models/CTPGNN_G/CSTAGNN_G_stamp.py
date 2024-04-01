@@ -35,7 +35,7 @@ class SrcProcess(nn.Module):
         self.distant_mat = dis_mat
         # self.re = nn.Linear(64, n_attr)
 
-    def forward(self, src, stamp):
+    def forward(self, src):
         src = self.enc_exp(src)
         b, n, t, k = src.shape
         if self.SE:
@@ -48,7 +48,8 @@ class SrcProcess(nn.Module):
 
 
 class TrgProcess(nn.Module):
-    def __init__(self, history_len, forcest_len, num_route, n_attr, CE, SE, TE, T4N):
+    def __init__(self, history_len, forcest_len, num_route, n_attr, CE, SE, TE, T4N
+                 ):
         super().__init__()
 
         self.mlp = MLP(history_len, 1)
@@ -69,7 +70,6 @@ class TrgProcess(nn.Module):
             self.dec_tem_enco = TempoEnc(
                 forcest_len + T4N['step'], n_attr, TE['nor'])
 
-
     def forward(self, trg, enc_output, head=None):
         head = self.mlp(enc_output)
         trg = self.dec_exp(trg)
@@ -84,9 +84,9 @@ class TrgProcess(nn.Module):
 
 class Decoder(nn.Module):
     def __init__(
-        self,
-        n_attr, n_hid, attn, drop_prob, n_layer,
-        dec_slf_mask, dec_mul_mask
+            self,
+            n_attr, n_hid, attn, drop_prob, n_layer,
+            dec_slf_mask, dec_mul_mask
     ):
         super().__init__()
         self.layer_stack = nn.ModuleList([
@@ -102,14 +102,15 @@ class Decoder(nn.Module):
 
 class Encoder(nn.Module):
     def __init__(
-        self,
-        num_route, history_len, n_attr, n_hid, dis_mat, sta, attn, STstamp, drop_prob, n_c,
-        enc_spa_mask, enc_tem_mask
+            self,
+            num_route, history_len, n_attr, n_hid, dis_mat, attn, STstamp, drop_prob, n_c,
+            enc_spa_mask, enc_tem_mask
     ):
         super().__init__()
 
         self.layer_stack = nn.ModuleList([
-            EncoderLayer_stamp(num_route, history_len, n_attr, n_hid, dis_mat, sta, attn, STstamp, drop_prob, n_c, enc_spa_mask, enc_tem_mask)
+            EncoderLayer_stamp(num_route, history_len, n_attr, n_hid, dis_mat, attn, STstamp, drop_prob, n_c,
+                               enc_spa_mask, enc_tem_mask)
             for _ in range(1)
         ])
 
@@ -121,12 +122,12 @@ class Encoder(nn.Module):
 
 class timestamp(nn.Module):
     def __init__(
-        self, circle, n_attr, history_len, TE
+            self, circle, n_attr, history_len, TE
     ):
         super().__init__()
-        self.time_stamp = nn.Embedding(circle, n_attr//4)
+        self.time_stamp = nn.Embedding(circle, n_attr // 4)
         # add temporal embedding and normalize
-        self.tempral_enc = TempoEnc(history_len, n_attr//4, TE['nor'])
+        self.tempral_enc = TempoEnc(history_len, n_attr // 4, TE['nor'])
 
     def forward(self, stamp):
         time_emb = self.time_stamp(stamp)
@@ -134,12 +135,12 @@ class timestamp(nn.Module):
         return time_emb
 
 
-class STAGNN_stamp(nn.Module):
+class CSTAGNN_G_stamp(nn.Module):
     def __init__(
-        self, n_layer, n_attr, n_hid, reg_A, circle, drop_prob, n_c, a, n_mask, adj_mx, sta, CE, LE, SE, TE, attn, STstamp, T4N,
-        num_route, history_len,forecast_len
+            self, n_layer, n_attr, n_hid, reg_A, circle, drop_prob, n_c, a, n_mask, adj_mx, CE, LE, SE, TE, attn,
+            STstamp, T4N,
+            num_route, history_len, forecast_len
     ):
-
         super().__init__()
 
         enc_spa_mask = torch.ones(1, 1, num_route, num_route).cuda()
@@ -154,7 +155,8 @@ class STAGNN_stamp(nn.Module):
         self.dec_rdu = ConvExpandAttr(
             n_attr, 1, CE['kernel_size'], CE['bias'])
 
-        self.encoder = Encoder(num_route, history_len, n_attr, n_hid, adj_mx, sta, attn, STstamp, drop_prob, n_c, enc_spa_mask, enc_tem_mask)
+        self.encoder = Encoder(num_route, history_len, n_attr, n_hid, adj_mx, attn, STstamp, drop_prob, n_c,
+                               enc_spa_mask, enc_tem_mask)
         self.decoder = Decoder(n_attr, n_hid, attn, drop_prob, n_layer, dec_slf_mask, dec_mul_mask)
 
         self.reg_A = reg_A
@@ -165,44 +167,30 @@ class STAGNN_stamp(nn.Module):
             self.change_enc = T4N['change_enc']
             self.T4N_end = T4N['end_epoch']
 
-        self.n_pred = forecast_len
+        self.forecast_len = forecast_len
         self.n_route = num_route
         self.a = a
         self.n_mask = n_mask
         self.n_c = n_c
-    def forward(self, src, time_stamp, label, epoch=1e8):
-        src_residual = src
+        #self.apply(self.weights_init)
+
+    '''def weights_init(self, m):
+        try:
+            if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight, gain=0.5)
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+        except:
+            pass'''
+
+    def forward(self, src, time_stamp, trg):
         src = src.permute(0, 2, 1, 3)
-        label = label.permute(0, 2, 1, 3)
-        enc_input = self.src_pro(src, time_stamp)
+        trg = trg.permute(0, 2, 1, 3)
+        enc_input = self.src_pro(src)
         time_emb = self.stamp_emb(time_stamp)
-        enc_output = self.encoder(enc_input, time_emb)
-        enc_output_4head = enc_output
+        enc_output = self.encoder(enc_input, src)
 
-        trg = label[:, :, :self.n_pred, 0].unsqueeze(-1)
-        loss = 0.0
-        dec_output = None
-        if self.T4N and epoch < self.T4N_end:
-            for i in range(self.T4N_step):
-                dec_input = self.trg_pro(trg, enc_output_4head)
-
-                dec_output = self.decoder(dec_input, enc_output)
-
-                if self.change_head and i < self.T4N_step - 1:
-                    pre = enc_output[:, :, 1:, :]
-                    post = dec_output[:, :, 0, :].unsqueeze(2)
-                    enc_output_4head = torch.cat([pre, post], dim=2)
-
-                if self.change_enc:
-                    enc_output = enc_output_4head
-
-                dec_output = self.dec_rdu(dec_output)
-                trg = dec_output[:, :, 1:, :]
-
-                loss = loss + \
-                    torch.abs(label[:, :, i:i+self.n_pred, :] -
-                              dec_output[:, :, :-1, :]).mean()
-            #A = self.encoder.layer_stack[0].stgc.r1@self.encoder.layer_stack[0].stgc.r1.T
-            #A_loss = (((A**2).sum())**0.5-self.n_c**0.5)**2
-            #loss = loss+self.reg_A*A_loss
-            return dec_output[:, :, :-1, :].permute(0, 2, 1, 3), loss
+        dec_input = self.trg_pro(trg, enc_output)
+        dec_output = self.decoder(dec_input, enc_output)
+        dec_output = self.dec_rdu(dec_output)
+        return dec_output.permute(0, 2, 1, 3)

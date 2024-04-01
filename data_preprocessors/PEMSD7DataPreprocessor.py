@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import pandas as pd
-
+from scipy.optimize import linprog
 from .abs import AbstractDataPreprocessor
 
 
@@ -22,6 +22,49 @@ class PEMSD7DataPreprocessor(AbstractDataPreprocessor):
         self.forecast_len = kwargs.get("forecast_len")
         self.eps = kwargs.get("eps")
         self.load_data()
+
+    def normalize(self, a):
+        mu = np.mean(a, axis=1, keepdims=True)
+        std = np.std(a, axis=1, keepdims=True)
+        return (a - mu) / std
+
+    def wasserstein_distance(self, p, q, D):
+        A_eq = []
+        for i in range(len(p)):
+            A = np.zeros_like(D)
+            A[i, :] = 1
+            A_eq.append(A.reshape(-1))
+        for i in range(len(q)):
+            A = np.zeros_like(D)
+            A[:, i] = 1
+            A_eq.append(A.reshape(-1))
+        A_eq = np.array(A_eq)
+        b_eq = np.concatenate([p, q])
+        D = np.array(D)
+        D = D.reshape(-1)
+
+        result = linprog(D, A_eq=A_eq[:-1], b_eq=b_eq[:-1])
+        myresult = result.fun
+
+        return myresult
+
+    def spatial_temporal_aware_distance(self, x, y):
+        x, y = np.array(x), np.array(y)
+        x_norm = (x ** 2).sum(axis=1, keepdims=True) ** 0.5
+        y_norm = (y ** 2).sum(axis=1, keepdims=True) ** 0.5
+        p = x_norm[:, 0] / x_norm.sum()
+        q = y_norm[:, 0] / y_norm.sum()
+        D = 1 - np.dot(x / x_norm, (y / y_norm).T)
+        return self.wasserstein_distance(p, q, D)
+
+    def spatial_temporal_similarity(self, x, y, normal, transpose):
+        if normal:
+            x = self.normalize(x)
+            x = self.normalize(x)
+        if transpose:
+            x = np.transpose(x)
+            y = np.transpose(y)
+        return 1 - self.spatial_temporal_aware_distance(x, y)
 
     def weight_matrix_nl(self, file_path, sigma2=0.1, epsilon=0.1, scaling=True):
         '''
@@ -54,6 +97,7 @@ class PEMSD7DataPreprocessor(AbstractDataPreprocessor):
         else:
             return W
 
+
     def load_data(self):
         """
         Load data from the specified file path.
@@ -78,6 +122,39 @@ class PEMSD7DataPreprocessor(AbstractDataPreprocessor):
         np.ndarray
             The preprocessed data array.
         """
+        T, N = self.data.shape
+        data1 = self.data.reshape(-1, 288, N)
+        d = np.zeros([N, N])
+        for i in range(N):
+            for j in range(i + 1, N):
+                d[i, j] = self.spatial_temporal_similarity(data1[:, :, i], data1[:, :, j], normal=False, transpose=False)
+
+        adj = d+d.T
+        np.save("data/stag_001_.npy", adj)
+        adj = np.load("data/stag_001_.npy")
+        id_mat = np.identity(N)
+        adjl = adj + id_mat
+        adjlnormd = adjl / adjl.mean(axis=0)
+
+        adj = 1 - adjl + id_mat
+        A_adj = np.zeros([N, N])
+        R_adj = np.zeros([N, N])
+        # A_adj = adj
+        adj_percent = 0.01
+
+        top = int(N * adj_percent)
+
+        for i in range(adj.shape[0]):
+            a = adj[i, :].argsort()[0:top]
+            for j in range(top):
+                A_adj[i, a[j]] = 1
+                R_adj[i, a[j]] = adjlnormd[i, a[j]]
+
+        for i in range(N):
+            for j in range(N):
+                if (i == j):
+                    R_adj[i][j] = adjlnormd[i, j]
+        print("The weighted matrix of temporal graph is generated!")
 
         self.update_dataset_params["history_len"] = self.history_len
         self.update_dataset_params["forecast_len"] = self.forecast_len
@@ -93,6 +170,7 @@ class PEMSD7DataPreprocessor(AbstractDataPreprocessor):
         self.update_trainer_params["num_route"] = self.data.shape[1]
 
         self.update_model_params["adj_mx"] = self.adj_mx
+        self.update_model_params["sta"] = R_adj
         self.update_model_params["history_len"] = self.history_len
         self.update_model_params["forecast_len"] = self.forecast_len
         self.update_model_params["num_route"] = self.data.shape[1]

@@ -1,2 +1,6 @@
-pyyaml~=6.0
+pyyaml~=6.0.1
 numpy~=1.23.5
+tqdm~=4.65.0
+pandas
+einops
+scipy

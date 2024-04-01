@@ -82,12 +82,13 @@ class CFSNETDataPreprocessor(AbstractDataPreprocessor):
             data["vars_index_dict"].tolist(),
         )
 
-
+        '''
         self.scaler = StandardScaler()
         train_data = df_data[:int(self.train_ratio * len(df_data))]
         self.scaler.fit(train_data.values)
         self.data = self.scaler.transform(df_data.values)
-
+        '''
+        self.data = df_data.values
         df_stamp = pd.DataFrame(df_stamp, columns=['date'])
         def timestamp2datetime(timestamp):
             return datetime.datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')

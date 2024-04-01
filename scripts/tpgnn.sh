@@ -4,6 +4,6 @@ python ./main.py \
     --model_config_path "./config/model_config/TPGNN_model_config.yaml" \
     --train_config_path "./config/train_config/TPGNN_train_config.yaml" \
     --model_name "STAGNN_stamp" \
-    --model_save_path "./model_states/TPGNN/TPGNN2.pkl" \
-    --result_save_dir "./results/TPGNN2"
+    --model_save_path "./model_states/TPGNN/TPGNN4.pkl" \
+    --result_save_dir "./results/TPGNN4"
 echo "结束测试......"

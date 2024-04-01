@@ -5,8 +5,10 @@ from .public.Autoformer.autoformer_arch import Autoformer
 from .soft_sensor.SAE.SAE_arch import StackedAutoEncoder
 from .TPGNN.STAGNN_stamp import STAGNN_stamp
 from .CTPGNN.CSTAGNN_stamp import CSTAGNN_stamp
+from .CTPGNN_L.CSTAGNN_L_stamp import CSTAGNN_L_stamp
+from .CTPGNN_G.CSTAGNN_G_stamp import CSTAGNN_G_stamp
 from .FSNET.net import net
 from .CFSNET.cnet import cnet
 from .SAN.Statistics_prediction import Statistics_prediction
 
-__all__ = ["AGCRN", "Autoformer", "StackedAutoEncoder", "STAGNN_stamp", "CSTAGNN_stamp", "net", "cnet", "Statistics_prediction"]
+__all__ = ["AGCRN", "Autoformer", "StackedAutoEncoder", "STAGNN_stamp", "CSTAGNN_stamp", "net", "cnet", "Statistics_prediction", "CSTAGNN_L_stamp", "CSTAGNN_G_stamp"]

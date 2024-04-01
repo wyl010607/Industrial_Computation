@@ -1,7 +1,7 @@
 #This is an example of train_config.yaml
 
 # basic
-random_seed: 66    #原666
+random_seed: 666
 batch_size: 50
 device: cuda:0
 load_checkpoint: False
@@ -11,20 +11,24 @@ optimizer_name: Adam
 optimizer_params:
   lr: 0.001
   weight_decay: 0.0001
+  #amsgrad: True
 
 # Scheduler
 scheduler_name: MultiStepLR
 scheduler_params:
-  milestones: [10, 40, 70]
+  milestones: [40]
   gamma: 0.3
 
 # Trainer
-trainer_name: CTPGNNTrainer
+trainer_name: CTPGNN_SANTrainer
 trainer_params:
   resume: False
+  period_len: 5
+  station_type: "adaptive"
+  station_lr: 0.001
   max_epoch_num: 80
   early_stop: 10
-  train_TPGNN_epochs: 10
+  train_TPGNN_epochs: 80
   train_TPGNN_optimizer_name: Adam
   train_TPGNN_optimizer_params:
     lr: 0.001

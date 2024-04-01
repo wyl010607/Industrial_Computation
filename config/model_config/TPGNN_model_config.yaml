@@ -36,7 +36,7 @@ STAGNN_stamp:
     d_v: 32
     drop_prob: 0.2
 
-  # TPGNN polynomial order
+  # TPGNN1 polynomial order
   STstamp:
     use: True
     kt: 3

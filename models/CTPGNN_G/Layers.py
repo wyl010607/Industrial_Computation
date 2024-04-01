@@ -108,7 +108,7 @@ class MLP(nn.Module):
 class EncoderLayer_stamp(nn.Module):
     def __init__(
         self,
-        num_route, history_len, n_attr, n_hid, dis_mat, sta, attn, STstamp, drop_prob, n_c,
+        num_route, history_len, n_attr, n_hid, dis_mat, attn, STstamp, drop_prob, n_c,
         spa_mask, tem_mask
     ):
         super().__init__()
@@ -120,7 +120,7 @@ class EncoderLayer_stamp(nn.Module):
         self.tem_mask = tem_mask
         assert STstamp['use'], "encoder_stamp requires time stamp as input."
         kt, droprate, temperature = STstamp['kt'], drop_prob, STstamp['temperature']
-        self.stgc = TPGNN(n_attr, n_attr, num_route, history_len, dis_mat, sta, kt, n_c, droprate, temperature)
+        self.stgc = TPGNN(n_attr, n_attr, num_route, history_len, dis_mat, kt, n_c, droprate, temperature)
        
         self.pos_ff1 = PositionwiseFeedForward(n_attr, n_hid, drop_prob)
         self.pos_ff2 = PositionwiseFeedForward(n_attr, n_hid, drop_prob)

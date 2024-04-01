@@ -3,7 +3,7 @@ python ./main.py \
     --data_config_path "./config/data_config/DIST_config.yaml" \
     --model_config_path "./config/model_config/CTPGNN_model_config.yaml" \
     --train_config_path "./config/train_config/CTPGNN_train_config.yaml" \
-    --model_name "CSTAGNN_stamp" \
-    --model_save_path "./model_states/CTPGNN/CTPGNN4.pkl" \
-    --result_save_dir "./results/CTPGNN/CTPGNN4"
+    --model_name "CSTAGNN_L_stamp" \
+    --model_save_path "./model_states/CTPGNN_L/CTPGNN_L5.pkl" \
+    --result_save_dir "./results/CTPGNN_L/CTPGNN_L5"
 echo "结束测试......"

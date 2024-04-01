@@ -105,7 +105,7 @@ class CTPGNNTrainer(AbstractTrainer):
                 ]
             loss = self.loss_func(
                 muti_step_pred, y[:, :, self.PV_index_list, :]
-            )
+            ) #+ A_loss
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
