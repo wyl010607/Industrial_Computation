@@ -67,7 +67,7 @@ class TPGNN(nn.Module):
         nn.init.xavier_uniform_(self.w_stack.data)
         self.reduce_stamp = nn.Linear(n_his, 1, bias=False)
         self.temp_1 = nn.Linear(d_attribute//4, kt+1)
-        self.gru = nn.GRU(n_route, d_attribute//4, 2, batch_first = True, dropout = 0.2)
+        self.gru = nn.GRU(n_route, d_attribute//4, 2, batch_first = True)
         # self.temp_2 = nn.Linear(d_attribute//4, kt+1)
         self.temperature = temperature
         self.d_out = d_out

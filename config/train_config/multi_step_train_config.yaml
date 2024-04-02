@@ -22,6 +22,4 @@ scheduler_params:
 trainer_name: IterMultiStepForecastTrainer
 trainer_params:
   max_epoch_num: 80
-  enable_ealry_stop: True # 启用早停策略
-  early_stop_patience: 10 # 多少个epoch没有提升就停止训练
-  early_stop_min_is_best: True # 验证集上loss是否越小越好
+  early_stop: 10
