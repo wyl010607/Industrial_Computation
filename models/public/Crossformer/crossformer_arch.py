@@ -7,15 +7,19 @@ from einops import rearrange, repeat
 from .cross_encoder import Encoder
 from .cross_decoder import Decoder
 from .cross_embed import DSW_embedding
+from .BIAS import BIAS
+from .GCN import GCN
 
 
 class Crossformer(nn.Module):
     def __init__(
         self,
         history_len,
+        forecast_len,
         num_nodes,
         seg_len,
-        forecast_len=1,
+        adj_mx,
+        forecast_length=1,
         channel=1,
         win_size=4,
         factor=10,
@@ -25,20 +29,24 @@ class Crossformer(nn.Module):
         e_layers=3,
         dropout=0.0,
         baseline=False,
+        bias_block=False,
         **kwargs,
     ):
         super(Crossformer, self).__init__()
         self.data_dim = num_nodes
         self.history_len = history_len
-        self.forecast_len = forecast_len
+        self.forecast_len = forecast_length
         self.seg_len = seg_len
         self.merge_win = win_size
 
         self.baseline = baseline
+        self.adj_mx = nn.Parameter(GCN.build_adj_matrix(adj_mx, adj_type="cheb", K=2))
+        self.bias_block = bias_block
+        self.bias_forecast_len = forecast_len
 
         # The padding operation to handle invisible sgemnet length
         self.pad_in_len = ceil(1.0 * history_len / seg_len) * seg_len
-        self.pad_out_len = ceil(1.0 * forecast_len / seg_len) * seg_len
+        self.pad_out_len = ceil(1.0 * forecast_length / seg_len) * seg_len
         self.in_len_add = self.pad_in_len - self.history_len
 
         # Embedding
@@ -76,13 +84,21 @@ class Crossformer(nn.Module):
             factor=factor,
         )
 
-
     def forward(self, history_data: torch.Tensor, **kwargs) -> torch.Tensor:
         x_seq = history_data[:, :, :, 0]  # (batch_size, history_len, num_nodes)
         if self.baseline:
             base = x_seq.mean(dim=1, keepdim=True)
         else:
             base = 0
+        if x_seq.dim() == 3:
+            x = x_seq.unsqueeze(3)
+        b_s, h_l, n_d, c = x.size()
+        if self.bias_block:
+            bb = BIAS(b_s, h_l, n_d, c, self.bias_forecast_len, 2, 3, self.adj_mx)
+            bias = bb(x)
+            # bias = torch.randn(32, 20, 37, 1)
+        else:
+            bias = torch.zeros(b_s, self.bias_forecast_len, n_d, c).cuda()
         batch_size = x_seq.shape[0]
         if self.in_len_add != 0:
             x_seq = torch.cat(
@@ -105,4 +121,4 @@ class Crossformer(nn.Module):
             base + predict_y[:, : self.forecast_len, :]
         )  # (batch_size, forecast_len, num_nodes)
 
-        return pred.unsqueeze(-1)
+        return pred.unsqueeze(-1), bias

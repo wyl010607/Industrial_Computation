@@ -90,7 +90,7 @@ class IterMultiStepForecastTrainer(AbstractTrainer):
             sample_x = x
             muti_step_pred = torch.zeros_like(y[:, :, self.PV_index_list, :])
             for i in range(y.shape[1]):
-                prediction = self.model(sample_x)
+                prediction, bias = self.model(sample_x)
                 muti_step_pred[:, i : i + 1, :, :] = prediction[
                     :, :, self.PV_index_list, :
                 ]
@@ -98,9 +98,13 @@ class IterMultiStepForecastTrainer(AbstractTrainer):
                 sample_x[:, -1:, self.OP_index_list, :] = y[
                     :, i : i + 1, self.OP_index_list, :
                 ]
+            muti_step_bias = muti_step_pred + bias[:, :, self.PV_index_list, :]
             loss = self.loss_func(
                 muti_step_pred, y[:, :, self.PV_index_list, :]
             )
+            loss_b = self.loss_func(muti_step_bias, y[:, :, self.PV_index_list, :])
+            if loss > loss_b:
+                loss = loss_b
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
@@ -141,7 +145,7 @@ class IterMultiStepForecastTrainer(AbstractTrainer):
             muti_step_pred = torch.zeros_like(y[:, :, self.PV_index_list, :])
             sample_x = x
             for i in range(y.shape[1]):
-                prediction = self.model(sample_x, iter_step=i).detach()
+                prediction, bias = self.model(sample_x, iter_step=i)
                 muti_step_pred[:, i : i + 1, :, :] = prediction[
                     :, :, self.PV_index_list, :
                 ]
@@ -149,13 +153,19 @@ class IterMultiStepForecastTrainer(AbstractTrainer):
                 sample_x[:, -1:, self.OP_index_list] = y[
                     :, i : i + 1, self.OP_index_list, :
                 ]
+            muti_step_bias = muti_step_pred + bias[:, :, self.PV_index_list, :]
             loss = self.loss_func(
                 muti_step_pred, y[:, :, self.PV_index_list, :]
             )
+            loss_b = self.loss_func(muti_step_bias, y[:, :, self.PV_index_list, :])
+            if loss > loss_b:
+                loss = loss_b
+                y_pred.append(muti_step_bias)
+            else:
+                y_pred.append(muti_step_pred)
             tol_loss += loss.item()
             data_num += 1
             y_true.append(y[:, :, self.PV_index_list, :])
-            y_pred.append(muti_step_pred)
 
         # y_pred.shape = [len(data_loader) ,batch_size, time_step, feature_size]
         # to [batch_size * len(data_loader) * time_step, feature_size]

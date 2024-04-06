@@ -16,6 +16,7 @@ ASTGCN:
   padding: 0
   conv_type: cheb
   K: 2
+  bias_block: True
 
 StemGNN:
   stack_cnt: 2
@@ -49,7 +50,7 @@ AutoFormer:
   day_of_year_size: 366
 
 Crossformer:
-  seg_len: 24
+  seg_len: 12
   win_size: 2
   # default parameter
   factor: 10
@@ -59,3 +60,4 @@ Crossformer:
   e_layers: 3
   dropout: 0.2
   baseline: False
+  bias_block: True

@@ -2,7 +2,7 @@
 
 # basic
 random_seed: 3407
-batch_size: 32
+batch_size: 64
 device: cuda:0
 load_checkpoint: False
 
@@ -21,5 +21,7 @@ scheduler_params:
 # Trainer
 trainer_name: IterMultiStepForecastTrainer
 trainer_params:
+  enable_early_stop: True
   max_epoch_num: 80
-  early_stop: 10
+  early_stop_patience: 10
+  early_stop_min_is_best: True

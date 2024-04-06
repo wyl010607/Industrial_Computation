@@ -4,6 +4,7 @@ import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
 from .GCN import GCN
+from .BIAS import BIAS
 
 
 class SpatialAttention(torch.nn.Module):
@@ -77,9 +78,9 @@ class ChebConv(torch.nn.Module):
 
     def forward(self, x, spatial_att):
         b, c_in, num_nodes, _ = x.size()
-
         outputs = []
         adj = spatial_att.unsqueeze(dim=1) * self.adj_mx
+        # adj = self.adj_mx.unsqueeze(dim=0)
         for i in range(c_in):
             x1 = x[:, i].unsqueeze(dim=1)
             y = torch.matmul(adj, x1).transpose(1, 2).reshape(b, num_nodes, -1)
@@ -207,6 +208,8 @@ class ASTGCNBlock(torch.nn.Module):
 
         spatial_att = self.spatial_att(x_tat)
         spatial_gcn = self.cheb_conv(x, spatial_att)
+        global gcn
+        gcn = spatial_gcn
 
         time_conv_output = self.time_conv(spatial_gcn.permute(0, 3, 2, 1)).permute(
             0, 3, 2, 1
@@ -224,6 +227,7 @@ class ASTGCN(torch.nn.Module):
     def __init__(
         self,
         history_len,
+        forecast_len,
         channel=1,
         feature_size=1,
         adj_mx=None,
@@ -237,6 +241,7 @@ class ASTGCN(torch.nn.Module):
         first_time_conv_stride=None,
         padding=0,
         K=2,
+        bias_block=False,
         **kwargs,
     ):
         super(ASTGCN, self).__init__()
@@ -285,6 +290,13 @@ class ASTGCN(torch.nn.Module):
             out_channels=self.forecast_len,
             kernel_size=(1, num_time_filter),
         )
+        self.gcn_conv = torch.nn.Conv2d(
+            in_channels=58,
+            out_channels=self.forecast_len,
+            kernel_size=(1, num_time_filter),
+        )
+        self.bias_block = bias_block
+        self.bias_forecast_len = forecast_len
 
     def forward(self, x, **kwargs):
         if self.first_time_conv:
@@ -297,4 +309,12 @@ class ASTGCN(torch.nn.Module):
         # [32, 1, 24, 1] -> [32, 1, 24]
         y = self.final_conv(y)
         # y = self.out_linear(y).unsqueeze(1)
-        return y
+        b_s, h_l, n_d, c = x.size()
+        if self.bias_block:
+            # print(self.bias_forecast_len)
+            bb = BIAS(b_s, h_l, n_d, c, self.bias_forecast_len, 2, 3, self.adj_mx)
+            bias = bb(x)
+            # bias = torch.randn(32, 20, 37, 1)
+        else:
+            bias = torch.zeros(b_s, self.bias_forecast_len, n_d, c).cuda()
+        return y, bias

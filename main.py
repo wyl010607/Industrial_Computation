@@ -50,15 +50,27 @@ def main(args):
     data_preprocessor_class = getattr(
         sys.modules["data_preprocessors"], data_config["data_preprocessor_name"]
     )
-    data_preprocessor = data_preprocessor_class(**data_config["data_preprocessor_params"])
+    data_preprocessor = data_preprocessor_class(
+        **data_config["data_preprocessor_params"]
+    )
     preprocessed_data = data_preprocessor.preprocess()
 
     train_data, valid_data, test_data = data_preprocessor.split_data(preprocessed_data)
 
     # update model & trainer params
-    updated_dataset_params = {**data_config["dataset_params"], **data_preprocessor.update_dataset_params}
-    updated_model_params = {**model_config[args.model_name], **data_preprocessor.update_model_params}
-    updated_trainer_params = {**train_config["trainer_params"], **data_preprocessor.update_trainer_params}
+    updated_dataset_params = {
+        **data_config["dataset_params"],
+        **data_preprocessor.update_dataset_params,
+    }
+    updated_model_params = {
+        **model_config[args.model_name],
+        **data_config["dataset_params"],
+        **data_preprocessor.update_model_params,
+    }
+    updated_trainer_params = {
+        **train_config["trainer_params"],
+        **data_preprocessor.update_trainer_params,
+    }
 
     # scale data
     scaler_class = getattr(sys.modules["utils.scaler"], data_config["scaler_name"])
@@ -174,7 +186,9 @@ if __name__ == "__main__":
         default="./config/data_config/DIST_config.yaml",
         help="Config path of Data",
     )
-    parser.add_argument("--model_name", type=str, default="Crossformer", help="Model name")
+    parser.add_argument(
+        "--model_name", type=str, default="Crossformer", help="Model name"
+    )
     parser.add_argument(
         "--model_save_path",
         type=str,
