@@ -118,7 +118,6 @@ class ChebConv(torch.nn.Module):
     def forward(self, x):
         b, c_in, num_nodes, _ = x.size()
         outputs = []
-        # adj = spatial_att.unsqueeze(dim=1) * self.adj_mx
         adj = self.adj_mx.unsqueeze(dim=0)
         for i in range(c_in):
             x1 = x[:, i].unsqueeze(dim=1)
@@ -174,7 +173,6 @@ class BIAS(nn.Module):
         self.K = 2
         self.loop_num = 1
         self.adj = adj
-        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         self.fc = nn.Conv2d(
             in_channels=channel, out_channels=forecast_len, kernel_size=(1, 64)
         )
@@ -198,24 +196,7 @@ class BIAS(nn.Module):
             m = GluLayer(half, self.forecast_len).cuda()
             x_glu = m(x_u, x_v)
             # spatial layer
-        cheb = self.cheb_conv(x)
-        sgc = self.gcn_conv(cheb)
+            cheb = self.cheb_conv(x)
+            sgc = self.gcn_conv(cheb)
         bias = x_glu + sgc
         return bias
-
-
-# target_size = (half, o_reshape.shape[-1])
-# c = F.interpolate(
-#     o_reshape.permute(0, 2, 1, 3), size=target_size, mode='nearest'
-# )
-# c = c.permute(0, 2, 1, 3).cpu()
-# if o.shape[1] & 1:
-#     o_reshape = torch.from_numpy(
-#         np.pad(
-#             o.cpu().detach().numpy(),
-#             [(0, 0), (0, 1), (0, 0), (0, 0)],
-#             mode='constant',
-#         )
-#     )
-# else:
-#     o_reshape = o

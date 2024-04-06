@@ -80,7 +80,6 @@ class ChebConv(torch.nn.Module):
         b, c_in, num_nodes, _ = x.size()
         outputs = []
         adj = spatial_att.unsqueeze(dim=1) * self.adj_mx
-        # adj = self.adj_mx.unsqueeze(dim=0)
         for i in range(c_in):
             x1 = x[:, i].unsqueeze(dim=1)
             y = torch.matmul(adj, x1).transpose(1, 2).reshape(b, num_nodes, -1)
@@ -208,8 +207,6 @@ class ASTGCNBlock(torch.nn.Module):
 
         spatial_att = self.spatial_att(x_tat)
         spatial_gcn = self.cheb_conv(x, spatial_att)
-        global gcn
-        gcn = spatial_gcn
 
         time_conv_output = self.time_conv(spatial_gcn.permute(0, 3, 2, 1)).permute(
             0, 3, 2, 1
