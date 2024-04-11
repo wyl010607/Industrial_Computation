@@ -4,7 +4,7 @@
 data_preprocessor_name: WeatherDataPreprocessor
 data_preprocessor_params:
   data_path: data/regression_dataset/Weather/Weather.csv
-  adj_mx_path: None
+  adj_mx_path: Nonullne
   steps_pre_day: 288
   train_ratio: 0.7
   valid_ratio: 0.1

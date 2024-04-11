@@ -4,7 +4,7 @@
 data_preprocessor_name: LargeSTDataPreprocessor
 data_preprocessor_params:
   data_path: data/regression_dataset/METR-LA/METR-LA.h5
-  adj_mx_path: None
+  adj_mx_path: null
   train_ratio: 0.7
   valid_ratio: 0.1
   add_feature_time_of_day: True

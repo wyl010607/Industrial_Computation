@@ -4,7 +4,7 @@
 data_preprocessor_name: ETTDataPreprocessor
 data_preprocessor_params:
   data_path: data/regression_dataset/ETTh1/ETTh1.csv
-  adj_mx_path: None
+  adj_mx_path: null
   train_ratio: 0.6
   valid_ratio: 0.2
   steps_pre_day: 24
