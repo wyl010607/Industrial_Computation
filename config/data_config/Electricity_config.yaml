@@ -7,7 +7,7 @@ data_preprocessor_params:
   adj_mx_path: null
   train_ratio: 0.7
   valid_ratio: 0.1
-  steps_pre_day: 24
+  steps_per_day: 24
   add_feature_time_of_day: True
   add_feature_day_of_week: True
   add_feature_day_of_month: True

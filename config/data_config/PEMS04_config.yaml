@@ -6,7 +6,7 @@ data_preprocessor_params:
   data_path: datasets/raw_data/PEMS04/PEMS04.npz
   adj_mx_path: datasets/raw_data/PEMS04/adj_PEMS04.pkl
   distance_adj_mx_path: datasets/raw_data/PEMS04/distance_adj_PEMS04.pkl
-  steps_pre_day: 288
+  steps_per_day: 288
   train_ratio: 0.6
   valid_ratio: 0.2
   add_feature_time_of_day: True
