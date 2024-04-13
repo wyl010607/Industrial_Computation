@@ -155,7 +155,7 @@ class IterMultiStepForecastTrainer(AbstractTrainer):
             tol_loss += loss.item()
             data_num += 1
             y_true.append(y[:, :, self.PV_index_list, :])
-            y_pred.append(muti_step_pred)
+            y_pred.append(muti_step_pred.detach())
 
         # y_pred.shape = [len(data_loader) ,batch_size, time_step, feature_size]
         # to [batch_size * len(data_loader) * time_step, feature_size]
