@@ -1,8 +1,8 @@
 net:
 #  gamma: 0.9
-  enc_in: 7
+  enc_in: 325
 #  dec_in: 7
-  c_out: 7
+  c_out: 325
 #  d_model: 512
 #  n_heads: 8
 #  e_layers: 2

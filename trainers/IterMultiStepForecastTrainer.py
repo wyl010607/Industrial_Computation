@@ -195,3 +195,4 @@ class IterMultiStepForecastTrainer(AbstractTrainer):
             self.model.forecast_len = 1
 
         return self.model
+

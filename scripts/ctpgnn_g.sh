@@ -4,6 +4,6 @@ python ./main.py \
     --model_config_path "./config/model_config/CTPGNN_model_config.yaml" \
     --train_config_path "./config/train_config/CTPGNN_train_config.yaml" \
     --model_name "CSTAGNN_G_stamp" \
-    --model_save_path "./model_states/CTPGNN_G/CTPGNN_G4.pkl" \
-    --result_save_dir "./results/CTPGNN_G/CTPGNN_G4"
+    --model_save_path "./model_states/CTPGNN_G/CTPGNN_G5.pkl" \
+    --result_save_dir "./results/CTPGNN_G/CTPGNN_G5"
 echo "结束测试......"

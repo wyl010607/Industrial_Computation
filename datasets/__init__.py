@@ -5,5 +5,7 @@ from .PEMSD7Dataset import PEMSD7Dataset
 from .CTPGNNDataset import CTPGNNDataset
 from .ETTh2Dataset import ETTh2Dataset
 from .CFSNETDataset import CFSNETDataset
+from .PEMS_BAYDataset import PEMS_BAYDataset
+from .COTPGNETDataset import COTPGNETDataset
 
-__all__ = ["AbstractDataset", "MultiStepForecastDataset", "SoftSensorDataset", "PEMSD7Dataset", "CTPGNNDataset","ETTh2Dataset","CFSNETDataset"]
+__all__ = ["AbstractDataset", "MultiStepForecastDataset", "SoftSensorDataset", "PEMSD7Dataset", "CTPGNNDataset","ETTh2Dataset","CFSNETDataset", "PEMS_BAYDataset", "COTPGNETDataset"]

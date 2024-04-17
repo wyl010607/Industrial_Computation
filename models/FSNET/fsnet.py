@@ -48,10 +48,10 @@ class TSEncoder(nn.Module):
 
         # [64] * 10 + [320] = [64, 64, 64, 64, 64, 64, 64, 64, 64 ,64, 320] = 11 items
         # for i in range(len(...)) -> 0, 1, ..., 10
-    
+    '''
     def ctrl_params(self):
         return self.feature_extractor.ctrl_params()
-
+    '''
     def forward(self, x, mask=None):  # x: B x T x input_dims
         nan_mask = ~x.isnan().any(axis=-1)
         x[~nan_mask] = 0
@@ -74,7 +74,6 @@ class TSEncoder(nn.Module):
         elif mask == 'mask_last':
             mask = x.new_full((x.size(0), x.size(1)), True, dtype=torch.bool)
             mask[:, -1] = False
-        
         mask &= nan_mask
         x[~mask] = 0
         
@@ -85,7 +84,7 @@ class TSEncoder(nn.Module):
         
         return x
 
-
+'''
 class BandedFourierLayer(nn.Module):
 
     def __init__(self, in_channels, out_channels, band, num_bands, freq_mixing=False, bias=True, length=201):
@@ -240,3 +239,5 @@ class GlobalLocalMultiscaleTSEncoder(nn.Module):
             global_multiscale = global_multiscale[0]
 
         return torch.cat([local_multiscale, global_multiscale], dim=-1)
+        
+'''

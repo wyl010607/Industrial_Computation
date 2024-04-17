@@ -10,7 +10,7 @@ from basicts.data import TimeSeriesForecastingDataset
 from basicts.losses import masked_mae
 from basicts.utils import load_adj
 
-from .arch import GraphWaveNet
+from models.public.GWNet.arch import GraphWaveNet
 
 CFG = EasyDict()
 

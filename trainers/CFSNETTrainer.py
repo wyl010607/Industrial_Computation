@@ -114,7 +114,7 @@ class CFSNETTrainer(AbstractTrainer):
             sample_x_mark = batch_x_mark
             muti_step_pred = torch.zeros_like(batch_y[:, :, self.PV_index_list, :])
             for j in range(batch_y.shape[1]):
-                pred, true = self._process_one_batch(batch_x, batch_y, batch_x_mark, batch_y_mark[:, j: j + 1, :])
+                pred, true = self._process_one_batch(sample_x, batch_y, sample_x_mark, batch_y_mark[:, j: j + 1, :])
                 muti_step_pred[:, j: j + 1, :, :] = pred[
                                                     :, :, self.PV_index_list, :
                                                     ]
@@ -222,7 +222,7 @@ class CFSNETTrainer(AbstractTrainer):
             sample_x_mark = batch_x_mark
             muti_step_pred = torch.zeros_like(batch_y[:, :, self.PV_index_list, :])
             for j in range(batch_y.shape[1]):
-                pred, true = self._process_one_batch(batch_x, batch_y, batch_x_mark, batch_y_mark[:, j: j + 1, :])
+                pred, true = self._process_one_batch(sample_x, batch_y, sample_x_mark, batch_y_mark[:, j: j + 1, :])
                 muti_step_pred[:, j: j + 1, :, :] = pred[
                                                     :, :, self.PV_index_list, :
                                                     ]
@@ -256,9 +256,9 @@ class CFSNETTrainer(AbstractTrainer):
             batch_y_mark = batch_y_mark.type(torch.float32).to(self.device)
             sample_x = batch_x
             sample_x_mark = batch_x_mark
-            muti_step_pred = torch.zeros_like(batch_y[:, :, self.PV_index_list, :])
+            muti_step_pred = torch.zeros_like(batch_y[:, :, self.PV_index_list, :]).to(self.device)
             for j in range(batch_y.shape[1]):
-                pred, true = self._process_one_batch(batch_x, batch_y, batch_x_mark, batch_y_mark[:, j: j + 1, :], mode='test')
+                pred, true = self._process_one_batch(sample_x, batch_y, sample_x_mark, batch_y_mark[:, j: j + 1, :], mode='test')
                 muti_step_pred[:, j: j + 1, :, :] = pred[
                                                     :, :, self.PV_index_list, :
                                                     ]
@@ -274,7 +274,7 @@ class CFSNETTrainer(AbstractTrainer):
             self.optimizer.zero_grad()
 
             y_true.append(batch_y[:, :, self.PV_index_list, :])
-            y_pred.append(muti_step_pred)
+            y_pred.append(muti_step_pred.detach())
 
         y_true = self.scaler.inverse_transform(
             torch.cat(y_true, dim=0).cpu().detach().numpy().reshape(-1, len(self.PV_index_list)),

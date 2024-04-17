@@ -1,5 +1,8 @@
+import pickle
+
 import numpy as np
 import pandas as pd
+import scipy.sparse as sp
 
 from data_preprocessors.abs import AbstractDataPreprocessor
 
@@ -47,6 +50,8 @@ class PEMSDataPreprocessor(AbstractDataPreprocessor):
         self.distance_adj_mx = None
         self.distance_adj_mx_path = distance_adj_mx_path if distance_adj_mx_path is not None else None
         self.steps_per_day = steps_per_day
+        self.history_len = kwargs.get("history_len")
+        self.forecast_len = kwargs.get("forecast_len")
         self.add_feature_time_of_day = add_feature_time_of_day
         self.add_feature_day_of_week = add_feature_day_of_week
         self.load_data()
@@ -55,9 +60,16 @@ class PEMSDataPreprocessor(AbstractDataPreprocessor):
         """
         Load data from the specified file path.
         """
-        data = np.load(self.data_path)["data"]
-        self.data = data
+        df = pd.read_hdf(self.data_path)
+        self.data = np.expand_dims(df.values, axis=-1)
 
+    def asym_adj(self, adj):
+        adj = sp.coo_matrix(adj)
+        rowsum = np.array(adj.sum(1)).flatten()
+        d_inv = np.power(rowsum, -1).flatten()
+        d_inv[np.isinf(d_inv)] = 0.
+        d_mat = sp.diags(d_inv)
+        return d_mat.dot(adj).astype(np.float32).todense()
 
     def preprocess(self):
         """
@@ -92,13 +104,29 @@ class PEMSDataPreprocessor(AbstractDataPreprocessor):
         preprocessed_data = np.concatenate(feature_list, axis=-1)
         # load adjacency matrix
         if self.adj_mx_path is not None:
-            self.adj_mx = np.load(self.adj_mx_path, allow_pickle=True)
+            try:
+                with open(self.adj_mx_path, 'rb') as f:
+                    _, _, adj_mx = pickle.load(f)
+            except UnicodeDecodeError as e:
+                with open(self.adj_mx_path, 'rb') as f:
+                    _, _, adj_mx = pickle.load(f, encoding='latin1')
+            except Exception as e:
+                print('Unable to load data ', self.adj_mx_path, ':', e)
+                raise
+            self.adj_mx = [self.asym_adj(adj_mx), self.asym_adj(np.transpose(adj_mx))]
             self.update_trainer_params["adj_mx"] = self.adj_mx
-        self.update_model_params["adj_mx"] = self.adj_mx
+            self.update_model_params["adj_mx"] = self.adj_mx
+
         if self.distance_adj_mx_path is not None:
             self.distance_adj_mx = np.load(self.distance_adj_mx_path, allow_pickle=True)
             self.update_trainer_params["distance_adj_mx"] = self.distance_adj_mx
-        self.update_model_params["distance_adj_mx"] = self.distance_adj_mx
+            self.update_model_params["distance_adj_mx"] = self.distance_adj_mx
+
+        self.update_model_params["history_len"] = self.history_len
+        self.update_model_params["out_dim"] = self.forecast_len
+        self.update_dataset_params["history_len"] = self.history_len
+        self.update_dataset_params["forecast_len"] = self.forecast_len
+        self.update_trainer_params["forecast_len"] = self.forecast_len
 
         return preprocessed_data
 

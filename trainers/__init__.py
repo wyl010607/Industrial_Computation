@@ -7,6 +7,8 @@ from .CTPGNNTrainer import CTPGNNTrainer
 from .FSNETTrainer import FSNETTrainer
 from .CFSNETTrainer import CFSNETTrainer
 from .CTPGNN_SANTrainer import CTPGNN_SANTrainer
+from .OTPGNETTrainer import OTPGNETTrainer
+from .COTPGNETTrainer import COTPGNETTrainer
 
 __all__ = [
     "AbstractTrainer",
@@ -17,5 +19,7 @@ __all__ = [
     "CTPGNNTrainer",
     "FSNETTrainer",
     "CFSNETTrainer",
-    "CTPGNN_SANTrainer"
+    "CTPGNN_SANTrainer",
+    "OTPGNETTrainer",
+    "COTPGNETTrainer"
 ]

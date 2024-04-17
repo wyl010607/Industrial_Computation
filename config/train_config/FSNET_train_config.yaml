@@ -28,7 +28,7 @@ trainer_params:
   train_FSNET_epochs: 6
   inverse: False
   lradj: 'type1'
-  learning_rate: 0.001
+  learning_rate: 0.004
   online_learning: 'full'
   n_inner: 1
 

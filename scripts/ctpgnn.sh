@@ -5,5 +5,5 @@ python ./main.py \
     --train_config_path "./config/train_config/CTPGNN_train_config.yaml" \
     --model_name "CSTAGNN_stamp" \
     --model_save_path "./model_states/CTPGNN/CTPGNN4.pkl" \
-    --result_save_dir "./results/CTPGNN/CTPGNN4"
+    --result_save_dir "./results/CTPGNN/CTPGNN5"
 echo "结束测试......"

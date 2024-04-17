@@ -1,6 +1,6 @@
 import numpy as np
 from .abs import AbstractDataPreprocessor
-
+import scipy.sparse as sp
 
 class DCSDataPreprocessor(AbstractDataPreprocessor):
     """
@@ -54,6 +54,8 @@ class DCSDataPreprocessor(AbstractDataPreprocessor):
             disturb_vars_list if disturb_vars_list is not None else []
         )
         self.load_data()
+        self.history_len = kwargs.get("history_len")
+        self.forecast_len = kwargs.get("forecast_len")
 
     def load_data(self):
         """
@@ -68,7 +70,13 @@ class DCSDataPreprocessor(AbstractDataPreprocessor):
             data["time_stamp_array"],
             data["vars_index_dict"].tolist(),
         )
-
+    def asym_adj(self, adj):
+        adj = sp.coo_matrix(adj)
+        rowsum = np.array(adj.sum(1)).flatten()
+        d_inv = np.power(rowsum, -1).flatten()
+        d_inv[np.isinf(d_inv)] = 0.
+        d_mat = sp.diags(d_inv)
+        return d_mat.dot(adj).astype(np.float32).todense()
     def preprocess(self):
         """
         Preprocess the loaded data.
@@ -104,9 +112,15 @@ class DCSDataPreprocessor(AbstractDataPreprocessor):
 
         # load adjacency matrix
         if self.adj_mx_path is not None:
-            self.adj_mx = np.load(self.adj_mx_path)
+            adj_mx = np.load(self.adj_mx_path)
+            self.adj_mx = [self.asym_adj(adj_mx)]
             self.update_trainer_params["adj_mx"] = self.adj_mx
         self.update_model_params["adj_mx"] = self.adj_mx
+        self.update_model_params["history_len"] = self.history_len
+        self.update_model_params["out_dim"] = self.forecast_len
+        self.update_dataset_params["history_len"] = self.history_len
+        self.update_dataset_params["forecast_len"] = self.forecast_len
+        self.update_trainer_params["forecast_len"] = self.forecast_len
         return preprocessed_data
 
     def split_data(self, preprocessed_data):

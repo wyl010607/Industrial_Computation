@@ -1,4 +1,4 @@
-CSTAGNN_G_stamp:
+CSTAGNN_stamp:
   n_layer: 1
   n_attr: 64
   n_hid: 256

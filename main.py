@@ -165,36 +165,38 @@ if __name__ == "__main__":
     parser.add_argument(
         "--train_config_path",
         type=str,
-        default="./config/train_config/CTPGNN_SAN_train_config.yaml",
+        default="./config/train_config/OTPGNET_train_config.yaml",
         help="Config path of Trainer",
     )
 
     parser.add_argument(
         "--model_config_path",
         type=str,
-        default="./config/model_config/CTPGNN_model_config.yaml",
+        default="./config/model_config/OTPGNET_model_config.yaml",
         help="Config path of models",
     )
 
     parser.add_argument(
         "--data_config_path",
         type=str,
-        default="./config/data_config/DIST_config.yaml",
+        default="./config/data_config/DIST_online_config.yaml",
         help="Config path of Data",
     )
-    parser.add_argument("--model_name", type=str, default="CSTAGNN_stamp", help="Model name")
+    parser.add_argument("--model_name", type=str, default="omnet", help="Model name")
     parser.add_argument(
         "--model_save_path",
         type=str,
-        default="./model_states/CTPGNN_SAN/CTPGNN_SAN3.pkl",
+        default="./model_states/COMTPGNET/FSNET000.pkl",
         help="Model save path",
     )
 
     parser.add_argument(
         "--result_save_dir_path",
         type=str,
-        default="./results/CTPGNN_SAN3",
+        default="./results/COMTPGNET/FSNET000",
         help="Result save path",
     )
     args = parser.parse_args()
     main(args)
+
+

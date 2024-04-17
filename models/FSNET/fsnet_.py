@@ -28,6 +28,7 @@ class SamePadConv(nn.Module):
         self.kernel_size= kernel_size
         
         self.grad_dim, self.shape = [], []
+
         for p in self.conv.parameters():
             self.grad_dim.append(p.numel())
             self.shape.append(p.size())
@@ -62,13 +63,14 @@ class SamePadConv(nn.Module):
         self.cos = nn.CosineSimilarity(dim=0, eps=1e-6)
         self.trigger = 0
         self.tau = 0.75
+    '''
     def ctrl_params(self):
         c_iter = chain(self.controller.parameters(), self.calib_w.parameters(), 
                 self.calib_b.parameters(), self.calib_f.parameters())
         for p in c_iter:
             yield p
-
-
+    
+    '''
     def store_grad(self):
         #print('storing grad')
         grad = self.conv.weight.grad.data.clone()
@@ -88,12 +90,14 @@ class SamePadConv(nn.Module):
         w = self.calib_w(rep)
         b = self.calib_b(rep)
         f = self.calib_f(rep)
-        q = torch.cat([w.view(-1), b.view(-1), f.view(-1)])
+
+        q = torch.cat([w.view(-1), b.view(-1), f.view(-1)]).cuda()
         if not hasattr(self, 'q_ema'):
             setattr(self, 'q_ema', torch.zeros(*q.size()).float().cuda())
         else:
             self.q_ema = self.f_gamma * self.q_ema + (1-self.f_gamma)*q
             q = self.q_ema
+        
         if self.trigger == 1:
             dim = w.size(0)
             self.trigger = 0
@@ -125,22 +129,25 @@ class SamePadConv(nn.Module):
             except:
                 pdb.set_trace()
         f = f.view(-1).unsqueeze(0).unsqueeze(2)
-       
+
         return w.unsqueeze(0) ,b.view(-1),f
+
 
 
     def forward(self, x):
         w,b,f = self.fw_chunks()
         d0, d1 = self.conv.weight.shape[1:]
-        
+
         cw = self.conv.weight * w
         #cw = self.conv.weight
         try:
             conv_out = F.conv1d(x, cw, padding=self.padding, dilation=self.dilation, bias = self.bias * b)
-            out =  f * conv_out
+            #conv_out = F.conv1d(x, cw, padding=self.padding, dilation=self.dilation, bias=self.bias )
+            out = conv_out
+            #out = f * conv_out
         except: pdb.set_trace()
         return out
-
+    '''
     def representation(self, x):
         out = self.conv(x)
         if self.remove > 0:
@@ -152,14 +159,14 @@ class SamePadConv(nn.Module):
         if self.remove > 0:
             out = out[:, :, : -self.remove]
         return out
-    
+    '''
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, dilation, final=False, gamma=0.9):
         super().__init__()
         self.conv1 = SamePadConv(in_channels, out_channels, kernel_size, dilation=dilation, gamma=gamma)
         self.conv2 = SamePadConv(out_channels, out_channels, kernel_size, dilation=dilation, gamma=gamma)
         self.projector = nn.Conv1d(in_channels, out_channels, 1) if in_channels != out_channels or final else None
-    
+    '''
     def ctrl_params(self):  
         c_iter = chain(self.conv1.controller.parameters(), self.conv1.calib_w.parameters(), 
                 self.conv1.calib_b.parameters(), self.conv1.calib_f.parameters(),
@@ -167,7 +174,7 @@ class ConvBlock(nn.Module):
                 self.conv2.calib_b.parameters(), self.conv2.calib_f.parameters())
 
         return c_iter
-
+    '''
 
     def forward(self, x):
         residual = x if self.projector is None else self.projector(x)
@@ -190,6 +197,7 @@ class DilatedConvEncoder(nn.Module):
             )
             for i in range(len(channels))
         ])
+    '''
     def ctrl_params(self):
         ctrl = []
         for l in self.net:
@@ -197,5 +205,6 @@ class DilatedConvEncoder(nn.Module):
         c = chain(*ctrl)
         for p in c:
             yield p
+    '''
     def forward(self, x):
         return self.net(x)

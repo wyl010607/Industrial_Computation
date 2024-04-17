@@ -1,0 +1,13 @@
+omnet:
+   num_nodes: 325
+   in_dim: 2
+   residual_channels: 64
+   dilation_channels: 64
+   skip_channels: 256
+   end_channels: 512
+   emb_channels: 16
+   blocks: 4
+   layers: 2
+   dropout: 0.3
+   gamma: 0.9
+   device: "cuda:0"

@@ -3,7 +3,6 @@ import torch.nn as nn
 
 from models.CFSNET.fsnet import TSEncoder
 
-
 class TS2VecEncoderWrapper(nn.Module):
     def __init__(self, encoder, mask):
         super().__init__()

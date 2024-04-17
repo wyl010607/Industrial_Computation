@@ -1,16 +1,18 @@
 # This is an example of data_config.yaml
 
 # data_preprocessors
-data_preprocessor_name: LargeSTDataPreprocessor
+data_preprocessor_name: PEMSDataPreprocessor
 data_preprocessor_params:
-  data_path: data/regression_dataset/METR-LA/METR-LA.h5
-  adj_mx_path: None
-  train_ratio: 0.7
-  valid_ratio: 0.1
+  data_path: data/regression_dataset/PEMS-BAY/PEMS-BAY.h5
+  adj_mx_path: data/regression_dataset/PEMS-BAY/adj_PEMS-BAY.pkl
+  train_ratio: 0.2
+  valid_ratio: 0.05
+  history_len: 12
+  forecast_len: 12
   add_feature_time_of_day: True
-  add_feature_day_of_week: True
-  add_feature_day_of_month: True
-  add_feature_day_of_year: True
+  add_feature_day_of_week: False
+  add_feature_day_of_month: False
+  add_feature_day_of_year: False
 
 
 # Scaler
@@ -20,13 +22,24 @@ scaler_params:
   std: 1
 
 # Dataset
-dataset_name: MultiStepForecastDataset
+dataset_name: PEMS_BAYDataset
 dataset_params:
-  history_len: 12
-  forecast_len: 12
+  {}
 
 dataloader_params:
-  shuffle: False
-  num_workers: 0
-  pin_memory: True
-  drop_last: False
+  train:
+    shuffle: True
+    num_workers: 0
+    pin_memory: True
+    drop_last: True
+  valid:
+    shuffle: False
+    num_workers: 0
+    pin_memory: True
+    drop_last: False
+  test:
+    shuffle: False
+    num_workers: 0
+    pin_memory: True
+    drop_last: False
+

@@ -129,6 +129,7 @@ class SamePadConv(nn.Module):
         return w.unsqueeze(0) ,b.view(-1),f
 
     def forward(self, x):
+
         w,b,f = self.fw_chunks()
         d0, d1 = self.conv.weight.shape[1:]
         

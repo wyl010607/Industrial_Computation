@@ -96,7 +96,7 @@ class FSNETTrainer(AbstractTrainer):
         self.learning_rate = learning_rate
 
     def loss_func(self, y_pred, y_true, *args, **kwargs):
-        loss = torch.nn.MSELoss()(y_pred, y_true)
+        loss = torch.nn.SmoothL1Loss()(y_pred, y_true)
         return loss.mean()
 
     def train_one_epoch(self, data_loader, *args, **kwargs):
@@ -223,7 +223,8 @@ class FSNETTrainer(AbstractTrainer):
         total_loss = np.average(total_loss)
         self.model.train()
         return total_loss
-
+    def inverse(self, data, mean, std):
+        return data * std + mean
 
     def test(self, test_data_loader, metrics=("mae", "rmse", "mape"), *args, **kwargs):
         self.model.load_state_dict(torch.load(self.model_save_path)) #之前没写
@@ -239,28 +240,39 @@ class FSNETTrainer(AbstractTrainer):
         maes, mses, rmses, mapes = [], [], [], []
         for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(tqdm(test_data_loader)):
             pred, true = self._process_one_batch( batch_x, batch_y, batch_x_mark, batch_y_mark, mode='test')
+            preds.append(pred.detach())
+            trues.append(true.detach())
 
-            preds.append(pred.detach().cpu())
-            trues.append(true.detach().cpu())
-            mae, mse, rmse, mape = metric(pred.detach().cpu().numpy(), true.detach().cpu().numpy())
-            maes.append(mae)
-            mses.append(mse)
-            rmses.append(rmse)
-            mapes.append(mape)
+        #preds = torch.cat(preds, dim=0).numpy()
+        #trues = torch.cat(trues, dim=0).numpy()
 
-        preds = torch.cat(preds, dim=0).numpy()
-        trues = torch.cat(trues, dim=0).numpy()
-        print('test shape:', preds.shape, trues.shape)
-
-        MAE, MSE, RMSE, MAPE = cumavg(maes), cumavg(mses), cumavg(rmses), cumavg(mapes)
-        mae, mse, rmse, mape = MAE[-1], MSE[-1], RMSE[-1], MAPE[-1]
-        print('mse:{}, mae:{}'.format(mse, mae))
+        y_pred = self.inverse(
+            torch.cat(preds, dim=0).cpu().detach().numpy().reshape(-1, 325), self.scaler.mean,
+            self.scaler.std
+        )
+        y_true = self.inverse(
+            torch.cat(trues, dim=0).cpu().detach().numpy().reshape(-1, 325), self.scaler.mean,
+            self.scaler.std
+        )
+        
+        
+        eval_results = self.get_eval_result(y_pred, y_true, metrics)
+        print("Evaluate result: ", end=" ")
+        for metric_name, eval_ret in zip(metrics, eval_results):
+            print("{}:  {:.4f}".format(metric_name.upper(), eval_ret), end="  ")
+        print()
+        # reshape y_pred to [batch_size * len(data_loader), time_step, feature_size]
         test_result = {}
-        test_result['mae'] = mae
-        test_result['mse'] = mse
-        test_result['rmse'] = rmse
-        test_result['mape'] = mape
-        return test_result, preds, trues
+        for metric_name, metric_eval in zip(metrics, eval_results):
+            test_result[metric_name] = metric_eval
+
+
+        return (
+            test_result,
+            y_pred.reshape(-1, self.forecast_len, 325, 1),
+            y_true.reshape(-1, self.forecast_len, 325, 1),
+        )
+
 
     def _save_epoch_result(self, epoch_result_list):
         """

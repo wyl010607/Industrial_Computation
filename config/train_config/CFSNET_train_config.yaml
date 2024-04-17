@@ -22,7 +22,7 @@ scheduler_params:
 trainer_name: CFSNETTrainer
 trainer_params:
   resume: False
-  max_epoch_num: 6
+  max_epoch_num: 1
   early_stop_patience: 3
   train_FSNET_epochs: 6
   inverse: False

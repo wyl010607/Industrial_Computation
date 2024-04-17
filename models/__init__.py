@@ -10,5 +10,11 @@ from .CTPGNN_G.CSTAGNN_G_stamp import CSTAGNN_G_stamp
 from .FSNET.net import net
 from .CFSNET.cnet import cnet
 from .SAN.Statistics_prediction import Statistics_prediction
+from .OTPGNET.onet import onet
+from .OGWNET.ogwnet import ogwnet
+from .OMTPGNET.omnet import omnet
+from .OTMTPGNET.otmnet import otmnet
+from .COMTPGNET.comnet import comnet
 
-__all__ = ["AGCRN", "Autoformer", "StackedAutoEncoder", "STAGNN_stamp", "CSTAGNN_stamp", "net", "cnet", "Statistics_prediction", "CSTAGNN_L_stamp", "CSTAGNN_G_stamp"]
+__all__ = ["AGCRN", "Autoformer", "StackedAutoEncoder", "STAGNN_stamp", "CSTAGNN_stamp", "net", "cnet",
+           "Statistics_prediction", "CSTAGNN_L_stamp", "CSTAGNN_G_stamp", "onet", "ogwnet", "omnet","comnet","otmnet"]

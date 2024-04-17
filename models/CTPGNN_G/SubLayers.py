@@ -59,13 +59,14 @@ class TPGNN(nn.Module):
     def __init__(self, d_attribute, d_out, n_route, n_his, dis_mat, kt=2, n_c=10, droprate=0., temperature=1.0) -> None:
         super(TPGNN, self).__init__()
         self.droprate = droprate
+        self.n_his = n_his
         self.d_attribute = d_attribute
         print(n_route, n_c)
         self.r1 = nn.Parameter(torch.randn(n_route, n_c))
         # self.r2 = nn.Parameter(torch.randn(n_route, 10))
         self.w_stack = nn.Parameter(torch.randn(kt+1, d_attribute, d_out))
         nn.init.xavier_uniform_(self.w_stack.data)
-        self.reduce_stamp = nn.Linear(n_his, 1, bias=False)
+        self.reduce_stamp = nn.Linear(n_his//3*2, 1, bias=False)
         self.temp_1 = nn.Linear(d_attribute//4, kt+1)
         self.gru = nn.GRU(n_route, d_attribute//4, 2, batch_first = True)
         # self.temp_2 = nn.Linear(d_attribute//4, kt+1)
@@ -91,6 +92,8 @@ class TPGNN(nn.Module):
         stamp_1, _ = self.gru(stamp.permute(0, 3, 2, 1).squeeze(1), h0)
         #stamp_1 = stamp_1[:, -1, :] 11
         #stamp_1, _ = gru_forward(stamp.permute(0, 3, 2, 1).squeeze(1), h0, self.gru.weight_ih_l0, self.gru.weight_hh_l0, self.gru.bias_ih_l0, self.gru.bias_hh_l0)
+
+        stamp_1 = stamp_1[:, self.n_his//3:, :]
 
         period_emb = self.reduce_stamp(stamp_1.permute(0, 2, 1)).squeeze(2)
         temp_1 = self.temp_1(period_emb) #stamp_1

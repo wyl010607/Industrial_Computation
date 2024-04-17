@@ -1,11 +1,11 @@
 # This is an example of data_config.yaml
 
 # data_preprocessors
-data_preprocessor_name: CFSNETDataPreprocessor
+data_preprocessor_name: CFSNETDataPreprocessor #改这里和下面
 data_preprocessor_params:
   data_path: data/jl_0701_0801.npz
   history_len: 60
-  forecast_len: 20
+  forecast_len: 1
   train_ratio: 0.2
   valid_ratio: 0.05
   timeenc: 2
