@@ -31,3 +31,4 @@ trainer_params:
   n_inner: 1
   inverse: False
   label_len: 30
+  features: 'M'

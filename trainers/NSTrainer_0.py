@@ -268,7 +268,7 @@ class NSTrainer_0(AbstractTrainer):
         total_loss = 0
 
         for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(tqdm.tqdm(data_loader)):
-            print("sssssssssssssssssssssssssssssssssssssssssssssssss")
+            #print("sssssssssssssssssssssssssssssssssssssssssssssssss")
             self.optimizer.zero_grad()
             #print("batch_x.shape",batch_x.shape)
             #print("batch_y.shape",batch_y.shape)
@@ -280,7 +280,7 @@ class NSTrainer_0(AbstractTrainer):
             sample_x_mark = batch_x_mark
             muti_step_pred = torch.zeros_like(batch_y[:, :, self.PV_index_list, :])
             #print("batch_x.shape",batch_x.shape)
-            print("batch_y.shape",batch_y.shape)
+            #print("batch_y.shape",batch_y.shape)
             dec_inp = torch.zeros_like(batch_y[:, -self.forecast_len:, :]).float()
             dec_inp = torch.cat([batch_y[:, :self.label_len, :], dec_inp], dim=1).float().to(self.device)
             #print("dec_inp.shape",dec_inp.shape)
@@ -301,7 +301,7 @@ class NSTrainer_0(AbstractTrainer):
             loss.backward()
             self.optimizer.step()
             total_loss += loss.item()
-            print("total_loss:",total_loss)
+            #print("total_loss:",total_loss)
         return total_loss / len(data_loader)
 
     @torch.no_grad()
@@ -311,9 +311,9 @@ class NSTrainer_0(AbstractTrainer):
         trues, preds=[], []
         data_num = 0
         pred_step = data_loader.dataset.forecast_len
-        print("fffffffffffffffffffffffffffffffffffffff")
+        #print("fffffffffffffffffffffffffffffffffffffff")
         for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(data_loader):
-            print("llllllllllllllllllllllllllllllllllllllllll")
+            #print("llllllllllllllllllllllllllllllllllllllllll")
             batch_x = batch_x.type(torch.float32).to(self.device)
             batch_y = batch_y.type(torch.float32).to(self.device)
             batch_x_mark = batch_x_mark.type(torch.float32).to(self.device)
@@ -323,7 +323,7 @@ class NSTrainer_0(AbstractTrainer):
             muti_step_pred = torch.zeros_like(batch_y[:, :, self.PV_index_list, :])
             dec_inp = torch.zeros_like(batch_y[:, -self.forecast_len:, :]).float()
             dec_inp = torch.cat([batch_y[:, :self.label_len, :], dec_inp], dim=1).float().to(self.device)
-            print(batch_y.shape)
+            #print(batch_y.shape)
             for j in range(batch_y.shape[1]):
                 pred = self.model(batch_x, batch_x_mark,dec_inp, batch_y_mark[:, j: j + 1, :])
                 muti_step_pred[:, j: j + 1, :, :] = pred[
@@ -340,10 +340,10 @@ class NSTrainer_0(AbstractTrainer):
             #loss = self.loss_func(pred, true)
             data_num += 1
             tol_loss += loss.item()
-            print("''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''")
+            #print("''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''")
             preds.append(muti_step_pred)
             trues.append(batch_y[:, :, self.PV_index_list, :])
-        print(preds)
+        #print(preds)
         y_true = self.scaler.inverse_transform(
             torch.cat(preds, dim=0).cpu().numpy().reshape(-1, len(self.PV_index_list)),
             index=self.PV_index_list,
@@ -431,7 +431,7 @@ class NSTrainer_0(AbstractTrainer):
         """
         Check if the model is a single step forecasting model. If not, try to set the forecast_len to 1.
         """
-        print("self.model.forecast_len=",self.model.forecast_len)
+        #print("self.model.forecast_len=",self.model.forecast_len)
         if not hasattr(self.model, "forecast_len"):
             raise AttributeError(
                 "The model does not have the attribute 'forecast_len'."

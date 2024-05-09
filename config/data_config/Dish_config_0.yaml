@@ -1,7 +1,7 @@
 # This is an example of data_config.yaml
 
 # data_preprocessors
-data_preprocessor_name: NSDataPreprocessor_0
+data_preprocessor_name: DishDataPreprocessor_0
 data_preprocessor_params:
   data_path: data/jl_0701_0801.npz
   train_ratio: 0.7
@@ -67,7 +67,7 @@ scaler_params:
   std: 1
 
 # Dataset
-dataset_name: NSDataset_0
+dataset_name: DishDataset_0
 dataset_params: {}
 
 dataloader_params:

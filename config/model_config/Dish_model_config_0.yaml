@@ -1,0 +1,18 @@
+Dish:
+  enc_in: 37
+  dec_in: 37
+  c_out: 37
+  dropout: 0.05
+  seg_len: 20
+  e_layers: 2
+  d_layers: 1
+  factor: 3
+  embed: 'timeF'
+  d_model: 512
+  output_attention: False
+  p_hidden_layers: 2
+  n_heads: 8
+  activation: 'gelu'
+  p_hidden_dims: [256, 256]
+  d_ff: 2048
+

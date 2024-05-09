@@ -4,8 +4,6 @@
 data_preprocessor_name: KoopaDataPreprocessor_0
 data_preprocessor_params:
   data_path: data/jl_0701_0801.npz
-  train_ratio: 0.6
-  valid_ratio: 0.2
   history_len: 60
   forecast_len: 20
   eps: 0.1

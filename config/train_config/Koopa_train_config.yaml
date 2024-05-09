@@ -19,13 +19,12 @@ scheduler_params:
   gamma: 0.3
 
 # Trainer
-trainer_name: KoopaTrainer
+trainer_name: KoopaTrainer_OL
 trainer_params:
   max_epoch_num: 80
-  early_stop: 10
+  early_stop: 5
   use_amp: False
-  patience: 3
-  batch_size: 32
+  patience: 5
   learning_rate: 0.001
   lradj: 'type1'
   online_learning: 'full'

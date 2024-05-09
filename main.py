@@ -95,20 +95,17 @@ def main(args):
     test_dataloader = DataLoader(
         test_dataset, batch_size=batch_size, **data_config["dataloader_params"]
     )
-    if args.model_name == 'Koopa' :
-        print(1)
+    if args.model_name == 'Koopa' or args.model_name == 'Koopa_0':
+        print("is koopa")
         amps = 0.0
         for data in train_dataloader:
             lookback_window = data[0].squeeze(-1)
             #lookback_window = data[0]
             amps += abs(torch.fft.rfft(lookback_window, dim=1)).mean(dim=0).mean(dim=1)
-        print('ssssssssss')
-        print((amps.shape))
-        print('ssssssssss')
         mask_spectrum = amps.topk(int(amps.shape[0] * 0.2)).indices
         updated_model_params = {**updated_model_params, "mask_spectrum": mask_spectrum}
     else :
-        print(0)
+        print("not koopa")
 
 
     # ------------------------- Model ---------------------------
@@ -183,35 +180,35 @@ if __name__ == "__main__":
     parser.add_argument(
         "--train_config_path",
         type=str,
-        default="./config/train_config/NS_train_config.yaml",
+        default="./config/train_config/Koopa_train_config.yaml",
         help="Config path of Trainer",
     )
 
     parser.add_argument(
         "--model_config_path",
         type=str,
-        default="./config/model_config/NS_model_config_0.yaml",
+        default="./config/model_config/Koopa_model_config_0.yaml",
         help="Config path of models",
     )
 
     parser.add_argument(
         "--data_config_path",
         type=str,
-        default="./config/data_config/NS_config_0.yaml",
+        default="./config/data_config/Koopa_config_0.yaml",
         help="Config path of Data",
     )
-    parser.add_argument("--model_name", type=str, default="NS", help="Model name")
+    parser.add_argument("--model_name", type=str, default="Koopa", help="Model name")
     parser.add_argument(
         "--model_save_path",
         type=str,
-        default="./model_states/NS/NS.pkl",
+        default="./model_states/Koopa_0/Koopa_OL.pkl",
         help="Model save path",
     )
 
     parser.add_argument(
         "--result_save_dir_path",
         type=str,
-        default="./results/NS",
+        default="./results/Koopa_dist",
         help="Result save path",
     )
     args = parser.parse_args()

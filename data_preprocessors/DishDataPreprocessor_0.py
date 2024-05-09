@@ -11,7 +11,7 @@ from utils.tools import StandardScaler
 
 
 
-class NSDataPreprocessor_0(AbstractDataPreprocessor):
+class DishDataPreprocessor_0(AbstractDataPreprocessor):
     """
     Data Preprocessor for DCS data.
     """

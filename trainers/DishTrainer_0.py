@@ -23,21 +23,7 @@ from abc import ABC, abstractmethod
 from utils.early_stop import EarlyStop
 import utils.metrics as metrics_module
 
-class KoopaTrainer_0(AbstractTrainer):
-    """
-    Abstract base class for training machine learning models.
-
-    Methods
-    -------
-    train(train_data_loader, eval_data_loader, metrics=("mae", "rmse", "mape"), *args, **kwargs)
-        Train the model with given data loaders and metrics.
-    test(test_data_loader, metrics=("mae", "rmse", "mape"), *args, **kwargs)
-        Test the model using the test data loader and specified metrics.
-    save_checkpoint(filename="checkpoint.pth")
-        Save the current training state as a checkpoint.
-    load_checkpoint(filename="checkpoint.pth")
-        Load training state from a checkpoint.
-    """
+class DishTrainer_0(AbstractTrainer):
 
     def __init__(
         self,
@@ -59,6 +45,7 @@ class KoopaTrainer_0(AbstractTrainer):
         early_stop_min_is_best=True,
         PV_index_list=None,
         OP_index_list=None,
+
         *args,
         **kwargs,
     ):
@@ -83,6 +70,7 @@ class KoopaTrainer_0(AbstractTrainer):
         self.n_inner = n_inner
         self.early_stop_patience = early_stop_patience
         self.lradj = lradj
+        self.label_len=kwargs.get("label_len")
         self.learning_rate = learning_rate
         self._check_model_is_single_step()
 
@@ -94,7 +82,7 @@ class KoopaTrainer_0(AbstractTrainer):
             *args,
             **kwargs,
     ):
-
+        #print("self.label_len=",self.label_len)
         tmp_state_save_path = os.path.join(self.model_save_dir_path, "temp.pkl")
         epoch_result_list = []
         early_stopping = EarlyStopping(patience=self.early_stop_patience, verbose=True)
@@ -280,7 +268,10 @@ class KoopaTrainer_0(AbstractTrainer):
         total_loss = 0
 
         for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(tqdm.tqdm(data_loader)):
+            #print("sssssssssssssssssssssssssssssssssssssssssssssssss")
             self.optimizer.zero_grad()
+            #print("batch_x.shape",batch_x.shape)
+            #print("batch_y.shape",batch_y.shape)
             batch_x = batch_x.type(torch.float32).to(self.device)
             batch_y = batch_y.type(torch.float32).to(self.device)
             batch_x_mark = batch_x_mark.type(torch.float32).to(self.device)
@@ -288,8 +279,16 @@ class KoopaTrainer_0(AbstractTrainer):
             sample_x = batch_x
             sample_x_mark = batch_x_mark
             muti_step_pred = torch.zeros_like(batch_y[:, :, self.PV_index_list, :])
+            #print("batch_x.shape",batch_x.shape)
+            #print("batch_y.shape",batch_y.shape)
+            dec_inp = torch.zeros_like(batch_y[:, -self.forecast_len:, :]).float()
+            dec_inp = torch.cat([batch_y[:, :self.label_len, :], dec_inp], dim=1).float().to(self.device)
+            #print("dec_inp.shape",dec_inp.shape)
+
             for j in range(batch_y.shape[1]):
-                pred = self.model(batch_x, batch_x_mark,batch_y, batch_y_mark[:, j: j + 1, :])
+                pred = self.model(batch_x, batch_x_mark, dec_inp,batch_y_mark[:, j: j + 1, :])
+                #print(pred.shape)
+                #print("qqqqqqqqqqqqqqqqqqqqqqqqq")
                 muti_step_pred[:, j: j + 1, :, :] = pred[
                                                     :, :, self.PV_index_list, :
                                                     ]
@@ -302,6 +301,7 @@ class KoopaTrainer_0(AbstractTrainer):
             loss.backward()
             self.optimizer.step()
             total_loss += loss.item()
+            #print("total_loss:",total_loss)
         return total_loss / len(data_loader)
 
     @torch.no_grad()
@@ -311,7 +311,9 @@ class KoopaTrainer_0(AbstractTrainer):
         trues, preds=[], []
         data_num = 0
         pred_step = data_loader.dataset.forecast_len
+        #print("fffffffffffffffffffffffffffffffffffffff")
         for i, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(data_loader):
+            #print("llllllllllllllllllllllllllllllllllllllllll")
             batch_x = batch_x.type(torch.float32).to(self.device)
             batch_y = batch_y.type(torch.float32).to(self.device)
             batch_x_mark = batch_x_mark.type(torch.float32).to(self.device)
@@ -319,8 +321,11 @@ class KoopaTrainer_0(AbstractTrainer):
             sample_x = batch_x
             sample_x_mark = batch_x_mark
             muti_step_pred = torch.zeros_like(batch_y[:, :, self.PV_index_list, :])
+            dec_inp = torch.zeros_like(batch_y[:, -self.forecast_len:, :]).float()
+            dec_inp = torch.cat([batch_y[:, :self.label_len, :], dec_inp], dim=1).float().to(self.device)
+            #print(batch_y.shape)
             for j in range(batch_y.shape[1]):
-                pred = self.model(batch_x, batch_x_mark, batch_y, batch_y_mark[:, j: j + 1, :])
+                pred = self.model(batch_x, batch_x_mark,dec_inp, batch_y_mark[:, j: j + 1, :])
                 muti_step_pred[:, j: j + 1, :, :] = pred[
                                                         :, :, self.PV_index_list, :
                                                         ]
@@ -329,15 +334,16 @@ class KoopaTrainer_0(AbstractTrainer):
                 sample_x[:, -1:, self.OP_index_list, :] = batch_y[
                                                               :, j: j + 1, self.OP_index_list, :
                                                               ]
-            pred = muti_step_pred.detach().cpu()
-            true = batch_y[:, :, self.PV_index_list, :].detach().cpu()
-            #loss = self.loss_func(muti_step_pred, batch_y[:, :, self.PV_index_list, :])
-            loss = self.loss_func(pred, true)
+            #pred = muti_step_pred.detach().cpu()
+            #true = batch_y[:, :, self.PV_index_list, :].detach().cpu()
+            loss = self.loss_func(muti_step_pred, batch_y[:, :, self.PV_index_list, :])
+            #loss = self.loss_func(pred, true)
             data_num += 1
             tol_loss += loss.item()
-            preds.append(pred)
-            trues.append(true)
-
+            #print("''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''")
+            preds.append(muti_step_pred)
+            trues.append(batch_y[:, :, self.PV_index_list, :])
+        #print(preds)
         y_true = self.scaler.inverse_transform(
             torch.cat(preds, dim=0).cpu().numpy().reshape(-1, len(self.PV_index_list)),
             index=self.PV_index_list,
@@ -425,7 +431,7 @@ class KoopaTrainer_0(AbstractTrainer):
         """
         Check if the model is a single step forecasting model. If not, try to set the forecast_len to 1.
         """
-        print("self.model.forecast_len=",self.model.forecast_len)
+        #print("self.model.forecast_len=",self.model.forecast_len)
         if not hasattr(self.model, "forecast_len"):
             raise AttributeError(
                 "The model does not have the attribute 'forecast_len'."

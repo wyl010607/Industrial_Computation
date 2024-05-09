@@ -1,6 +1,12 @@
 import math
 import torch
 import torch.nn as nn
+import torch
+import torch.nn as nn
+from .DishTS import DishTS
+from .Transformer_EncDec import Decoder, DecoderLayer, Encoder, EncoderLayer
+from .SelfAttention_Family import DSAttention, AttentionLayer
+from .Embed import DataEmbedding
 
 
 
@@ -233,12 +239,12 @@ class TimeInvKP(nn.Module):
         return res
 
 
-class Koopa(nn.Module):
+class Koopa_0(nn.Module):
     '''
     Koopman Forecasting Model
     '''
-    def __init__(self,mask_spectrum,enc_in,history_len,forecast_len,seg_len,num_blocks,dynamic_dim,hidden_dim,hidden_layers,multistep,*args,**kwags):
-        super(Koopa, self).__init__()
+    def __init__(self,mask_spectrum,enc_in,dropout,c_out,d_ff,e_layers,history_len,output_attention,d_layers,n_heads,factor,forecast_len,activation,seg_len,num_blocks,dynamic_dim,hidden_dim,hidden_layers,multistep,d_model,*args,**kwags):
+        super(Koopa_0, self).__init__()
         self.mask_spectrum = mask_spectrum
         self.enc_in = enc_in
         self.history_len = history_len
@@ -252,10 +258,22 @@ class Koopa(nn.Module):
         #print(self.dynamic_dim)
         #print(self.forecast_len)
 
+        self.output_attention = output_attention
+        self.enc_in=enc_in
+        self.d_model = d_model
+
+        self.dropout = dropout
+        self.c_out = c_out
+        self.e_layers = e_layers
+        self.d_layers = d_layers
+        self.d_ff=d_ff
+        self.factor=factor
+        self.n_heads=n_heads
+        self.activation=activation
+
         self.disentanglement = FourierFilter(self.mask_spectrum)
 
         # shared encoder/decoder to make koopman embedding consistent
-
 
 
         self.time_inv_encoder = MLP(f_in=self.history_len, f_out=self.dynamic_dim, activation='relu',
@@ -285,11 +303,14 @@ class Koopa(nn.Module):
                               decoder=self.time_var_decoder,
                               multistep=self.multistep)
                     for _ in range(self.num_blocks)])
+        self.nm = DishTS(enc_in=self.enc_in,history_len=self.history_len)
 
     def forward(self, x_enc, x_mark_enc, x_dec, x_mark_dec):
         # x_enc: B L C
         x_enc=x_enc.squeeze(-1)
+        x_dec=x_dec.squeeze(-1)
         # Series Stationarization adopted from NSformer
+        #x_enc, x_dec = self.nm(x_enc, 'forward', x_dec)
         mean_enc = x_enc.mean(1, keepdim=True).detach() # B x 1 x E
         x_enc = x_enc - mean_enc
         std_enc = torch.sqrt(torch.var(x_enc, dim=1, keepdim=True, unbiased=False) + 1e-5).detach()
@@ -306,8 +327,9 @@ class Koopa(nn.Module):
                 forecast = (time_inv_output + time_var_output)
             else:
                 forecast += (time_inv_output + time_var_output)
-
+        forecast = self.nm(forecast, 'inverse')
         # Series Stationarization adopted from NSformer
-        res = forecast * std_enc + mean_enc
-        return res.unsqueeze(3)
-        #return res
+        #res = forecast * std_enc + mean_enc
+        #return res.unsqueeze(3)
+        #return forecast
+        return forecast.unsqueeze(3)

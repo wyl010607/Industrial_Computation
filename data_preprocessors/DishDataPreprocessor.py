@@ -12,7 +12,7 @@ import warnings
 from .abs import AbstractDataPreprocessor
 warnings.filterwarnings('ignore')
 
-class KoopaDataPreprocessor(AbstractDataPreprocessor):
+class DishDataPreprocessor(AbstractDataPreprocessor):
 
 
     def __init__(self,data_path,*args, **kwargs):
@@ -30,7 +30,6 @@ class KoopaDataPreprocessor(AbstractDataPreprocessor):
         self.history_len = kwargs.get("history_len")
         self.forecast_len = kwargs.get("forecast_len")
         self.label_len = kwargs.get("label_len")
-
         self.load_data()
 
     def load_data(self):
@@ -51,7 +50,7 @@ class KoopaDataPreprocessor(AbstractDataPreprocessor):
         elif self.features == 'S':
             df_data = df_raw[[self.target]]
 
-        num_train = int(len(df_raw) * 0.6)
+        num_train = int(len(df_raw) * 0.7)
         num_test = int(len(df_raw) * 0.2)
         num_vali = len(df_raw) - num_train - num_test
         border1s = [0, num_train - self.history_len, len(df_raw) - num_test - self.history_len]
@@ -95,6 +94,7 @@ class KoopaDataPreprocessor(AbstractDataPreprocessor):
         self.update_dataset_params["data_stamp"] = self.data_stamp
         self.update_model_params["history_len"] = self.history_len
         self.update_model_params["label_len"] = self.label_len
+        self.update_model_params["freq"] = self.freq
         self.update_model_params["forecast_len"] = self.forecast_len
         self.update_trainer_params["label_len"] = self.label_len
         self.update_trainer_params["forecast_len"] = self.forecast_len
@@ -106,7 +106,7 @@ class KoopaDataPreprocessor(AbstractDataPreprocessor):
     def split_data(self, preprocessed_data):
 
 
-        num_train = int(len(preprocessed_data) * 0.6)
+        num_train = int(len(preprocessed_data) * 0.7)
         num_test = int(len(preprocessed_data) * 0.2)
         num_vali = len(preprocessed_data) - num_train - num_test
         border1s = [0, num_train - self.history_len, len(preprocessed_data) - num_test - self.history_len]
