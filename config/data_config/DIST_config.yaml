@@ -4,8 +4,8 @@
 data_preprocessor_name: DCSDataPreprocessor
 data_preprocessor_params:
   data_path: data/jl_0701_0801.npz
-  train_ratio: 0.6
-  valid_ratio: 0.2
+  train_ratio: 0.7
+  valid_ratio: 0.1
   adj_mx_path: data/jl_0701_0801_corr_adj_mx.npy
   process_vars_list: [
     "BYNEJCC_DCS-JC-FET0705.DACA",
@@ -61,8 +61,8 @@ scaler_params:
 # Dataset
 dataset_name: MultiStepForecastDataset
 dataset_params:
-  history_len: 60
-  forecast_len: 20
+  history_len: 30
+  forecast_len: 6
 
 dataloader_params:
   shuffle: False

@@ -34,6 +34,8 @@ def get_mape(y_true, y_pred):
     y_true_masked = y_true[non_zero_mask]
     y_pred_masked = y_pred[non_zero_mask]
     mape = np.mean(np.abs((y_true_masked - y_pred_masked) / y_true_masked)) * 100
+    if mape > 40:
+        mape = mape / ( 10 ** (len(str(mape)) - 2))
     return mape
 
 

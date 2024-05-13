@@ -183,11 +183,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "--data_config_path",
         type=str,
-        default="./config/data_config/DIST_config.yaml",
+        default="./config/data_config/GHL_config.yaml",
         help="Config path of Data",
     )
     parser.add_argument(
-        "--model_name", type=str, default="Crossformer", help="Model name"
+        "--model_name", type=str, default="ASTGCN", help="Model name"
     )
     parser.add_argument(
         "--model_save_path",

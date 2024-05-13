@@ -243,9 +243,10 @@ class ASTGCN(torch.nn.Module):
     ):
         super(ASTGCN, self).__init__()
         self.history_len = history_len
-        self.forecast_len = 1  # 单步预测
+        self.forecast_len = 1  # Single step prediction
         self.channel = channel
         self.first_time_conv = first_time_conv
+        self.para = 5e-2
         f_in = feature_size
         if first_time_conv:
             assert (
@@ -294,6 +295,8 @@ class ASTGCN(torch.nn.Module):
         )
         self.bias_block = bias_block
         self.bias_forecast_len = forecast_len
+        self.Linear = nn.Linear(1, self.history_len)
+        self.using_improve = False
 
     def forward(self, x, **kwargs):
         if self.first_time_conv:
@@ -306,11 +309,17 @@ class ASTGCN(torch.nn.Module):
         # [32, 1, 24, 1] -> [32, 1, 24]
         y = self.final_conv(y)
         # y = self.out_linear(y).unsqueeze(1)
-        b_s, h_l, n_d, c = x.size()
+
+        input_bias = x 
+        if self.using_improve:
+            y_res = self.Linear(y.permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
+            y_res = (y_res + x) * self.para
+            input_bias = y_res
+        b_s, h_l, n_d, c = input_bias.size()
         if self.bias_block:
             # print(self.bias_forecast_len)
             bb = BIAS(b_s, h_l, n_d, c, self.bias_forecast_len, 2, 3, self.adj_mx)
-            bias = bb(x)
+            bias = bb(input_bias)
             # bias = torch.randn(32, 20, 37, 1)
         else:
             bias = torch.zeros(b_s, self.bias_forecast_len, n_d, c).cuda()

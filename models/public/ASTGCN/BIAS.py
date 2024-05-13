@@ -150,6 +150,26 @@ class GluLayer(nn.Module):
         a = self.fc1(x)
         b = self.fc2(y)
         return self.glu(torch.cat((a, b), dim=1))
+    
+class PositionalEncoding(nn.Module):
+
+    def __init__(self, num_hiddens, dropout, max_len=1000):
+        super(PositionalEncoding, self).__init__()
+        self.dropout = nn.Dropout(dropout)
+        self.P = torch.zeros((1, max_len, num_hiddens))
+        X = torch.arange(max_len, dtype=torch.float32).reshape(-1, 1) / torch.pow(
+            10000, torch.arange(0, num_hiddens, 2, dtype=torch.float32) / num_hiddens
+        )
+        # Discussion on odd and even numbers:
+        self.P[:, :, 0::2] = torch.sin(X)
+        if num_hiddens & 1:
+            self.P[:, :, 1::2] = torch.cos(X[:, : num_hiddens // 2])
+        else:
+            self.P[:, :, 1::2] = torch.cos(X)
+
+    def forward(self, X):
+        X = X + self.P[:, : X.shape[1], :].to(X.device)
+        return self.dropout(X)
 
 
 class BIAS(nn.Module):
@@ -184,11 +204,18 @@ class BIAS(nn.Module):
         self.cheb_conv = ChebConv(1, 64, self.adj)
 
     def forward(self, x):
-        o = x
+        o = x.permute(3, 1, 0, 2).reshape(self.channel, self.history_len, -1)
+        pos_encoding = PositionalEncoding(self.num_nodes * self.batch_size, 0).eval()
+        X = (
+            pos_encoding(o)
+            .reshape(self.channel, self.history_len, self.batch_size, self.num_nodes)
+            .permute(2, 1, 3, 0)
+        )
+        o = X
         # (batch, seq_len, nodes_num, in_channel)
         for i in range(self.loop_num):
             # temporal layer
-            o_reshape = o
+            o_reshape = x
             half = int(o_reshape.shape[1] / 2)
             split = torch.split(o_reshape, half, dim=1)
             x_u = split[0]

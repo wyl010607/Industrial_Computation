@@ -43,6 +43,7 @@ class Crossformer(nn.Module):
         self.adj_mx = nn.Parameter(GCN.build_adj_matrix(adj_mx, adj_type="cheb", K=2))
         self.bias_block = bias_block
         self.bias_forecast_len = forecast_len
+        self.para = 5e-2
 
         # The padding operation to handle invisible sgemnet length
         self.pad_in_len = ceil(1.0 * history_len / seg_len) * seg_len
@@ -83,6 +84,8 @@ class Crossformer(nn.Module):
             out_seg_num=(self.pad_out_len // seg_len),
             factor=factor,
         )
+        self.Linear = nn.Linear(1, self.history_len)
+        self.using_improve = False
 
     def forward(self, history_data: torch.Tensor, **kwargs) -> torch.Tensor:
         x_seq = history_data[:, :, :, 0]  # (batch_size, history_len, num_nodes)
@@ -92,13 +95,7 @@ class Crossformer(nn.Module):
             base = 0
         if x_seq.dim() == 3:
             x = x_seq.unsqueeze(3)
-        b_s, h_l, n_d, c = x.size()
-        if self.bias_block:
-            bb = BIAS(b_s, h_l, n_d, c, self.bias_forecast_len, 2, 3, self.adj_mx)
-            bias = bb(x)
-            # bias = torch.randn(32, 20, 37, 1)
-        else:
-            bias = torch.zeros(b_s, self.bias_forecast_len, n_d, c).cuda()
+        
         batch_size = x_seq.shape[0]
         if self.in_len_add != 0:
             x_seq = torch.cat(
@@ -120,5 +117,18 @@ class Crossformer(nn.Module):
         pred = (
             base + predict_y[:, : self.forecast_len, :]
         )  # (batch_size, forecast_len, num_nodes)
+
+        input_bias = x 
+        if self.using_improve:
+            y_res = self.Linear(pred.unsqueeze(-1).permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
+            y_res = (y_res + x) * self.para
+            input_bias = y_res
+        b_s, h_l, n_d, c = input_bias.size()
+        if self.bias_block:
+            bb = BIAS(b_s, h_l, n_d, c, self.bias_forecast_len, 2, 3, self.adj_mx)
+            bias = bb(input_bias)
+            # bias = torch.randn(32, 20, 37, 1)
+        else:
+            bias = torch.zeros(b_s, self.bias_forecast_len, n_d, c).cuda()
 
         return pred.unsqueeze(-1), bias

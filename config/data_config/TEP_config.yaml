@@ -1,0 +1,87 @@
+# This is an example of data_config.yaml
+
+# data_preprocessors
+data_preprocessor_name: DCSDataPreprocessor
+data_preprocessor_params:
+  data_path: data/regression_dataset/TEP/TEP_data.npz
+  train_ratio: 0.7
+  valid_ratio: 0.1
+  adj_mx_path: data/regression_dataset/TEP/TEP_data_corr_adj_mx.npy
+  process_vars_list: [
+    "A Feed",
+    "D Feed",
+    "E Feed",
+    "A + C Feed",
+    "Recycle flow",
+    "Reactor feed",
+    "Reactor pressure",
+    "Reactor level",
+    "Reactor temperature",
+    "Purge rate",
+    "Sep temperature",
+    "Sep level",
+    "Sep pressure",
+    "Sep underflow",
+    "Stripper level",
+    "Stripper pressure",
+    "Stripper underflow",
+    "Stripper temperature",
+    "Steam flow",
+    "Compressor work",
+    "React. cool temperature",
+    "Condo cool. temperature",
+    "Feed %A",
+    "Feed %B",
+    "Feed %C",
+    "Feed %D",
+    "Feed %E",
+    "Feed %F",
+    "Purge %A",
+    "Purge %B",
+    "Purge %C",
+    "Purge %D",
+    "Purge %E",
+    "Purge %F",
+    "Purge %G",
+    "Purge %H",
+    "Product %D",
+    "Product %E",
+    "Product %F",
+    "Product %G",
+    "Product %H",
+  ]
+  control_vars_list: [
+    "D feed flow",
+    "E feed flow",
+    "A feed flow",
+    "C feed flow",
+    "Compressor recycle valve",
+    "Purge flow",
+    "Separator liquid flow",
+    "Stripper liquid product flow",
+    "Stripper steam flow",
+    "Reactor cooling water flow",
+    "Condenser cooling water flow",
+    "Agitator speed",
+  ]
+  disturb_vars_list: [
+  ]
+
+
+# Scaler
+scaler_name: StandardScaler
+scaler_params:
+  mean: 0
+  std: 1
+
+# Dataset
+dataset_name: MultiStepForecastDataset
+dataset_params:
+  history_len: 30
+  forecast_len: 6
+
+dataloader_params:
+  shuffle: False
+  num_workers: 0
+  pin_memory: True
+  drop_last: False

@@ -1,0 +1,53 @@
+# This is an example of data_config.yaml
+
+# data_preprocessors
+data_preprocessor_name: DCSDataPreprocessor
+data_preprocessor_params:
+  data_path: data/regression_dataset/GHL/GHL_data.npz
+  train_ratio: 0.7
+  valid_ratio: 0.1
+  adj_mx_path: data/regression_dataset/GHL/GHL_data_corr_adj_mx.npy
+  process_vars_list: [
+    "RT_temperature.T",
+    "HT_temperature.T",
+    "RT_level",
+    "C_level",
+    "C_temperature.T",
+    "HT_level",
+  ]
+  control_vars_list: [
+    "out_valve_act",
+    "inv_valve_act",
+    "inj_valve_act",
+    "dir_valve_act",
+    "heater_act",
+  ]
+  disturb_vars_list: [
+    "RT_level_ini",
+    "dT_rand",
+    "limiter.y",
+    "Relaxing.active",
+    "boundary.m_flow_in",
+    "dt_rand",
+    "limiter1.y",
+    "dL_rand",
+  ]
+
+
+# Scaler
+scaler_name: StandardScaler
+scaler_params:
+  mean: 0
+  std: 1
+
+# Dataset
+dataset_name: MultiStepForecastDataset
+dataset_params:
+  history_len: 30
+  forecast_len: 6
+
+dataloader_params:
+  shuffle: False
+  num_workers: 0
+  pin_memory: True
+  drop_last: False
