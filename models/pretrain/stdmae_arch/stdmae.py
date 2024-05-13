@@ -10,11 +10,11 @@ class STDMAE(nn.Module):
 
     def __init__(self, mask_args, backend_args, **kwargs):
         super().__init__()
-        # iniitalize 
-        self.tmae = STDMask(**mask_args)
-        self.smae = STDMask(**mask_args)
-        self.num_nodes = kwargs["num_nodes"]
+        # iniitalize
         self.adj_mx = kwargs["adj_mx"]
+        self.tmae = STDMask(**mask_args, adj_mx=self.adj_mx)
+        self.smae = STDMask(**mask_args, adj_mx=self.adj_mx)
+        self.num_nodes = kwargs["num_nodes"]
         self.backend = GraphWaveNet(**backend_args, num_nodes=self.num_nodes, adj_mx=self.adj_mx)
 
 

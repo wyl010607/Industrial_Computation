@@ -1,6 +1,11 @@
 import torch
 from torch import nn
-from positional_encodings.torch_encodings import PositionalEncoding1D, PositionalEncoding2D, PositionalEncoding3D, Summer
+from positional_encodings.torch_encodings import (
+    PositionalEncoding1D,
+    PositionalEncoding2D,
+    PositionalEncoding3D,
+    Summer,
+)
 
 
 class PositionalEncoding(nn.Module):

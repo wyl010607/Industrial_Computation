@@ -9,7 +9,7 @@ load_checkpoint: False
 # Optimizer
 optimizer_name: Adam
 optimizer_params:
-  lr: 0.002
+  lr: 0.0005
   weight_decay: 1.0e-5
   eps: 1.0e-8
 
@@ -36,6 +36,7 @@ trainer_params:
       mlp_ratio: 4
       dropout: 0.1
       mask_ratio: 0.25
+      patch_method: 'STpatch'
       encoder_depth: 4
       decoder_depth: 1
       spatial: True
@@ -49,6 +50,7 @@ trainer_params:
       mlp_ratio: 4
       dropout: 0.1
       mask_ratio: 0.25
+      patch_method: 'STpatch'
       encoder_depth: 4
       decoder_depth: 1
       spatial: False
@@ -58,24 +60,24 @@ trainer_params:
     optimizer_name: Adam
     optimizer_params:
       s_model_params:
-        lr: 0.002
+        lr: 0.0005
         weight_decay: 1.0e-5
         eps: 1.0e-8
       t_model_params:
-        lr: 0.002
+        lr: 0.0005
         weight_decay: 1.0e-5
         eps: 1.0e-8
     # Scheduler
     scheduler_name: MultiStepLR
     scheduler_params:
       s_model_params:
-        milestones: [ 50 ]
+        milestones: [ 3, 7, 15, 25 ]
         gamma: 0.5
       t_model_params:
-        milestones: [ 50 ]
+        milestones: [ 3, 7, 15, 25 ]
         gamma: 0.5
     #Pretrainer
     trainer_name: MAEPretrainer
     trainer_params:
-      max_epoch_num: 1
+      max_epoch_num: 30
       early_stop: 10
