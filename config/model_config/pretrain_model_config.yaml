@@ -9,6 +9,7 @@ STDMAE:
     mlp_ratio: 4
     dropout: 0.1
     patch_method: 'STpatch'
+    adjust_adj_mx: true
     mask_ratio: 0.25
     encoder_depth: 4
     decoder_depth: 1

@@ -37,6 +37,7 @@ class STDMask(nn.Module):
         patch_method="patch",
         adj_mx=None,
         spatial=False,
+        adjust_adj_mx=False,
         mode="pre-train",
     ):
         super().__init__()
@@ -71,7 +72,7 @@ class STDMask(nn.Module):
                 norm_layer=None,
                 adj_mx=adj_mx,
                 neighbor_simplied_num=3,
-                adjust_adj_mx=False,
+                adjust_adj_mx=adjust_adj_mx,
             )
 
         # positional encoding to device
