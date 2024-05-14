@@ -181,8 +181,7 @@ class BIAS(nn.Module):
         channel,
         forecast_len,
         K,
-        loop_num,
-        adj,
+        adj
     ):
         super(BIAS, self).__init__()
         self.batch_size = batch_size
@@ -190,8 +189,7 @@ class BIAS(nn.Module):
         self.forecast_len = forecast_len
         self.num_nodes = num_nodes
         self.channel = channel
-        self.K = 2
-        self.loop_num = 1
+        self.K = K
         self.adj = adj
         self.fc = nn.Conv2d(
             in_channels=channel, out_channels=forecast_len, kernel_size=(1, 64)
@@ -203,27 +201,28 @@ class BIAS(nn.Module):
         ).cuda()
         self.cheb_conv = ChebConv(1, 64, self.adj)
 
-    def forward(self, x):
-        o = x.permute(3, 1, 0, 2).reshape(self.channel, self.history_len, -1)
-        pos_encoding = PositionalEncoding(self.num_nodes * self.batch_size, 0).eval()
-        X = (
-            pos_encoding(o)
-            .reshape(self.channel, self.history_len, self.batch_size, self.num_nodes)
-            .permute(2, 1, 3, 0)
-        )
-        o = X
+    def forward(self, x, bias_block):
+        o = x
+        if bias_block == 2:
+            o = x.permute(3, 1, 0, 2).reshape(self.channel, self.history_len, -1)
+            pos_encoding = PositionalEncoding(self.num_nodes * self.batch_size, 0).eval()
+            X = (
+                pos_encoding(o)
+                .reshape(self.channel, self.history_len, self.batch_size, self.num_nodes)
+                .permute(2, 1, 3, 0)
+            )
+            o = X
         # (batch, seq_len, nodes_num, in_channel)
-        for i in range(self.loop_num):
-            # temporal layer
-            o_reshape = x
-            half = int(o_reshape.shape[1] / 2)
-            split = torch.split(o_reshape, half, dim=1)
-            x_u = split[0]
-            x_v = split[1]
-            m = GluLayer(half, self.forecast_len).cuda()
-            x_glu = m(x_u, x_v)
-            # spatial layer
-            cheb = self.cheb_conv(x)
-            sgc = self.gcn_conv(cheb)
+        # temporal layer
+        o_reshape = o
+        half = int(o_reshape.shape[1] / 2)
+        split = torch.split(o_reshape, half, dim=1)
+        x_u = split[0]
+        x_v = split[1]
+        m = GluLayer(half, self.forecast_len).cuda()
+        x_glu = m(x_u, x_v)
+        # spatial layer
+        cheb = self.cheb_conv(x)
+        sgc = self.gcn_conv(cheb)
         bias = x_glu + sgc
         return bias

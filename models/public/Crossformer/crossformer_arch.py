@@ -7,8 +7,8 @@ from einops import rearrange, repeat
 from .cross_encoder import Encoder
 from .cross_decoder import Decoder
 from .cross_embed import DSW_embedding
-from .BIAS import BIAS
-from .GCN import GCN
+from ..Bias_Block.BIAS import BIAS
+from ..Bias_Block.GCN import GCN
 
 
 class Crossformer(nn.Module):
@@ -85,7 +85,6 @@ class Crossformer(nn.Module):
             factor=factor,
         )
         self.Linear = nn.Linear(1, self.history_len)
-        self.using_improve = False
 
     def forward(self, history_data: torch.Tensor, **kwargs) -> torch.Tensor:
         x_seq = history_data[:, :, :, 0]  # (batch_size, history_len, num_nodes)
@@ -95,7 +94,7 @@ class Crossformer(nn.Module):
             base = 0
         if x_seq.dim() == 3:
             x = x_seq.unsqueeze(3)
-        
+
         batch_size = x_seq.shape[0]
         if self.in_len_add != 0:
             x_seq = torch.cat(
@@ -118,15 +117,17 @@ class Crossformer(nn.Module):
             base + predict_y[:, : self.forecast_len, :]
         )  # (batch_size, forecast_len, num_nodes)
 
-        input_bias = x 
-        if self.using_improve:
-            y_res = self.Linear(pred.unsqueeze(-1).permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
+        input_bias = x
+        if self.bias_block == 2:
+            y_res = self.Linear(pred.unsqueeze(-1).permute(0, 2, 3, 1)).permute(
+                0, 3, 1, 2
+            )
             y_res = (y_res + x) * self.para
             input_bias = y_res
         b_s, h_l, n_d, c = input_bias.size()
-        if self.bias_block:
-            bb = BIAS(b_s, h_l, n_d, c, self.bias_forecast_len, 2, 3, self.adj_mx)
-            bias = bb(input_bias)
+        if self.bias_block != 0:
+            bb = BIAS(b_s, h_l, n_d, c, self.bias_forecast_len, 2, self.adj_mx)
+            bias = bb(input_bias, self.bias_block)
             # bias = torch.randn(32, 20, 37, 1)
         else:
             bias = torch.zeros(b_s, self.bias_forecast_len, n_d, c).cuda()
