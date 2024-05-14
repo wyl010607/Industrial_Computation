@@ -128,21 +128,21 @@ class ChebConv(torch.nn.Module):
 
 
 class GluLayer(nn.Module):
-    def __init__(self, input_size, output_size):
+    def __init__(self, input_size, output_size, kernel_size, dilation, padding):
         super().__init__()
         self.fc1 = nn.Conv2d(
             in_channels=input_size,
             out_channels=output_size,
-            kernel_size=3,
-            dilation=2,
-            padding=2,
+            kernel_size=kernel_size,
+            dilation=dilation,
+            padding=padding,
         )
         self.fc2 = nn.Conv2d(
             in_channels=input_size,
             out_channels=output_size,
-            kernel_size=3,
-            dilation=2,
-            padding=2,
+            kernel_size=kernel_size,
+            dilation=dilation,
+            padding=padding,
         )
         self.glu = nn.GLU(dim=1)
 
@@ -175,40 +175,37 @@ class PositionalEncoding(nn.Module):
 class BIAS(nn.Module):
     def __init__(
         self,
-        batch_size,
         history_len,
-        num_nodes,
-        channel,
         forecast_len,
+        num_time_filter,
         K,
         adj
     ):
         super(BIAS, self).__init__()
-        self.batch_size = batch_size
         self.history_len = history_len
         self.forecast_len = forecast_len
-        self.num_nodes = num_nodes
-        self.channel = channel
         self.K = K
         self.adj = adj
+        self.num_time_filter = num_time_filter
         self.fc = nn.Conv2d(
-            in_channels=channel, out_channels=forecast_len, kernel_size=(1, 64)
+            in_channels=1, out_channels=forecast_len, kernel_size=(1, self.num_time_filter)
         )
         self.gcn_conv = torch.nn.Conv2d(
             in_channels=self.history_len,
             out_channels=self.forecast_len,
-            kernel_size=(1, 64),
+            kernel_size=(1, self.num_time_filter),
         ).cuda()
-        self.cheb_conv = ChebConv(1, 64, self.adj)
+        self.cheb_conv = ChebConv(1, self.num_time_filter, self.adj)
 
     def forward(self, x, bias_block):
         o = x
+        batch_size, _, num_nodes, _ = o.size()
         if bias_block == 2:
-            o = x.permute(3, 1, 0, 2).reshape(self.channel, self.history_len, -1)
-            pos_encoding = PositionalEncoding(self.num_nodes * self.batch_size, 0).eval()
+            o = x.permute(3, 1, 0, 2).reshape(1, self.history_len, -1)
+            pos_encoding = PositionalEncoding(num_nodes * batch_size, 0).eval()
             X = (
                 pos_encoding(o)
-                .reshape(self.channel, self.history_len, self.batch_size, self.num_nodes)
+                .reshape(1, self.history_len, batch_size, num_nodes)
                 .permute(2, 1, 3, 0)
             )
             o = X
@@ -219,7 +216,7 @@ class BIAS(nn.Module):
         split = torch.split(o_reshape, half, dim=1)
         x_u = split[0]
         x_v = split[1]
-        m = GluLayer(half, self.forecast_len).cuda()
+        m = GluLayer(half, self.forecast_len, kernel_size=3, dilation=2, padding=2).cuda()
         x_glu = m(x_u, x_v)
         # spatial layer
         cheb = self.cheb_conv(x)
