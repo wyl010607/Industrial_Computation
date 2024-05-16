@@ -1,0 +1,36 @@
+# data_preprocessors
+data_preprocessor_name: CWRUDataPreprocessor
+data_preprocessor_params:
+  data_path: ./data/CWRU
+  train_ratio: 0.7
+  valid_ratio: 0.15
+  s_load: 2
+  t_load: 3
+  s_label_set: [ 0,1,2,3,4,5,6,7,8,9 ]
+  t_label_set: [ 0,1,2,3,4,5,6,7,8,9 ]
+  feature_name: _DE_time
+  # data names in every working conditions
+  name_dict: {    0:[97, 109, 122, 135, 174, 189, 201, 213, 226, 238],  # 1797rpm
+                  1:[98, 110, 123, 136, 175, 190, 202, 214, 227, 239],  # 1772rpm
+                  2:[99, 111, 124, 137, 176, 191, 203, 215, 228, 240],  # 1750rpm
+                  3:[100,112, 125, 138, 177, 192, 204, 217, 229, 241]}  # 1730rpm
+  fft: False
+  data_length: 1600
+  window: 512
+  random_seed: 29
+  class_num: 10
+  data_dimension : "DWT"
+
+
+# Scaler
+scaler_name: DWTMinMaxScaler
+scaler_params:
+  mean: 0
+  std: 1
+
+# Dataset
+dataloader_params:
+  shuffle: True
+  num_workers: 0
+  pin_memory: True
+  drop_last: False

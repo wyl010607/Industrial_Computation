@@ -26,19 +26,19 @@ class AbstractTrainer(ABC):
     """
 
     def __init__(
-        self,
-        model,
-        optimizer,
-        scheduler,
-        scaler,
-        model_save_path,
-        result_save_dir_path,
-        max_epoch_num,
-        enable_early_stop=False,
-        early_stop_patience=5,
-        early_stop_min_is_best=True,
-        *args,
-        **kwargs,
+            self,
+            model,
+            optimizer,
+            scheduler,
+            scaler,
+            model_save_path,
+            result_save_dir_path,
+            max_epoch_num,
+            enable_early_stop=False,
+            early_stop_patience=5,
+            early_stop_min_is_best=True,
+            *args,
+            **kwargs,
     ):
         """
         Initialize the trainer.
@@ -84,12 +84,13 @@ class AbstractTrainer(ABC):
         self.min_loss = torch.finfo(torch.float32).max
 
     def train(
-        self,
-        train_data_loader,
-        eval_data_loader,
-        metrics=("mae", "rmse", "mape"),
-        *args,
-        **kwargs,
+            self,
+            s_train_data_loader,
+            t_train_data_loader,
+            eval_data_loader,
+            metrics=("acc",),
+            *args,
+            **kwargs,
     ):
         """
         Train the model using the provided training and evaluation data loaders.
@@ -114,8 +115,7 @@ class AbstractTrainer(ABC):
         for epoch in range(self.epoch_now, self.max_epoch_num):
             print(f"Epoch {epoch} / {self.max_epoch_num}")
             self.save_checkpoint()
-            # train
-            train_loss = self.train_one_epoch(train_data_loader)  # 训练一个epoch
+            train_loss = self.train_one_epoch(s_train_data_loader, t_train_data_loader)  # 训练一个epoch
             self.epoch_now += 1
             print(f"Train loss: {train_loss:.4f}")
             # evaluate
@@ -126,7 +126,7 @@ class AbstractTrainer(ABC):
 
             # check early stop
             if self.early_stop is not None and self.early_stop.reach_stop_criteria(
-                eval_loss
+                    eval_loss
             ):
                 self.early_stop.reset()
                 break
@@ -145,7 +145,7 @@ class AbstractTrainer(ABC):
         epoch_result_json = self._save_epoch_result(epoch_result_list)  # 保存epoch结果
         return epoch_result_json
 
-    def test(self, test_data_loader, metrics=("mae", "rmse", "mape"), *args, **kwargs):
+    def test(self, test_data_loader, metrics=("acc",), *args, **kwargs):
         """
         Test the model using the provided test data loader.
         Parameters
@@ -169,7 +169,7 @@ class AbstractTrainer(ABC):
         self.model.load_state_dict(torch.load(self.model_save_path))
         # evaluate on test set
         test_loss, metrics_evals, y_pred, y_true = self.evaluate(
-            test_data_loader, metrics
+            test_data_loader, metrics,test = True
         )
         test_result = {"loss": test_loss}
         for metric_name, metric_eval in metrics_evals:
@@ -219,31 +219,10 @@ class AbstractTrainer(ABC):
             for metric_name, metric_eval in metrics_evals:
                 epoch_result[epoch][metric_name] = metric_eval
         with open(
-            os.path.join(self.result_save_dir_path, "epoch_result.json"), "w"
+                os.path.join(self.result_save_dir_path, "epoch_result.json"), "w"
         ) as f:
             json.dump(epoch_result, f, indent=4)
         return epoch_result
-
-    @abstractmethod
-    def loss_func(self, y_pred, y_true, *args, **kwargs):
-        """
-        Abstract method for computing the loss.
-
-        To be implemented by subclasses.
-
-        Parameters
-        ----------
-        y_pred
-            Predicted values.
-        y_true
-            True values.
-
-        Returns
-        -------
-        torch.Tensor
-            Computed loss.
-        """
-        pass
 
     @abstractmethod
     def train_one_epoch(self, *args, **kwargs):
@@ -287,7 +266,7 @@ class AbstractTrainer(ABC):
         pass
 
     @staticmethod
-    def get_eval_result(y_pred, y_true, metrics=("mae", "rmse", "mape")):
+    def get_eval_result(y_pred, y_true, metrics=("acc",)):
         """
         Compute evaluation metrics for the given predictions and true values.
 

@@ -1,0 +1,31 @@
+data_preprocessor_name: JNUDataPreprocessor
+data_preprocessor_params:
+  data_path: ./data/JNU
+  train_ratio: 0.7
+  valid_ratio: 0.15
+  s_load: 0
+  t_load: 1
+  label_dict : ['n','ib','tb','ob']
+  domain_dict: ['600','800','1000']
+  s_label_set: [ 0,1,2,3]
+  t_label_set: [ 0,1,2,3]
+  # data names in every working conditions
+  number_class: 4 
+  fft: False
+  data_length: 1024
+  window: 512
+  random_seed: 29
+
+
+# Scaler
+scaler_name: MinMaxScaler
+scaler_params:
+  mean: 0
+  std: 1
+
+# Dataset
+dataloader_params:
+  shuffle: True
+  num_workers: 0
+  pin_memory: True
+  drop_last: False

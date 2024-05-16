@@ -1,5 +1,26 @@
 import numpy as np
 
+import numpy as np
+
+
+def get_acc(y_true, y_pred):
+    """
+    Accuracy
+    Formula: Accuracy = (Number of correct predictions) / (Total number of predictions)
+    """
+    # Ensure both y_true and y_pred have the same shape
+    if len(y_true) != len(y_pred):
+        raise ValueError("Input shapes of y_true and y_pred must be the same.")
+
+    correct_predictions = 0
+    for i, j in zip(y_true, y_pred):
+        if i == j:
+            correct_predictions += 1
+
+    accuracy = correct_predictions / len(y_true) * 100.0
+
+    return accuracy
+
 
 def get_mae(y_true, y_pred):
     """
@@ -44,15 +65,15 @@ def get_rmspe(y_true, y_pred):
     """
     non_zero_mask = y_true != 0
     rmspe = (
-        np.sqrt(
-            np.mean(
-                np.square(
-                    (y_true[non_zero_mask] - y_pred[non_zero_mask])
-                    / y_true[non_zero_mask]
+            np.sqrt(
+                np.mean(
+                    np.square(
+                        (y_true[non_zero_mask] - y_pred[non_zero_mask])
+                        / y_true[non_zero_mask]
+                    )
                 )
             )
-        )
-        * 100
+            * 100
     )
     return rmspe
 

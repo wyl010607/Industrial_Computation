@@ -1,11 +1,9 @@
 from .abs import AbstractTrainer
 from .IterMultiStepForecastTrainer import IterMultiStepForecastTrainer
-from .SAETrainer import SAETrainer
-from .SoftSensorTrainer import SoftSensorTrainer
+from .DannTrainer import DannTrainer
+from .DpadaTrainer import DpadaTrainer
+from .CrcaaTrainer import CrcaaTrainer
+from .PsnnTrainer import PsnnTrainer
+#from .DasanTrainer import DasanTrainer
 
-__all__ = [
-    "AbstractTrainer",
-    "IterMultiStepForecastTrainer",
-    "SAETrainer",
-    "SoftSensorTrainer",
-]
+__all__ = ["AbstractTrainer", "IterMultiStepForecastTrainer", "DannTrainer","DpadaTrainer","CrcaaTrainer","PsnnTrainer"]

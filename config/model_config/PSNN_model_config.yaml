@@ -1,0 +1,4 @@
+PSNN:
+  backbone: ResNet1D
+  
+  data_length: 1024

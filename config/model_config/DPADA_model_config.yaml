@@ -1,0 +1,3 @@
+DPADA:
+  backbone: ResNet1D
+  

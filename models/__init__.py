@@ -1,7 +1,9 @@
 from .public.AGCRN.agcrn_arch import AGCRN
 from .public.Autoformer.autoformer_arch import Autoformer
-#from .public.Crossformer.crossformer_arch import Crossformer
+from .DANN.dann_arch import DANN
+from .DPADA.dpada_arch import DPADA
+from .CRCAA.crcaa_arch import CRCAA
+from .PSNN.psnn_arch import PSNN
+#from .DASAN.dasan_arch import DASAN
 
-from .soft_sensor.SAE.SAE_arch import StackedAutoEncoder
-
-__all__ = ["AGCRN", "Autoformer", "StackedAutoEncoder"]
+__all__ = ["AGCRN", "Autoformer", "DANN", "DASAN","DPADA","CRCAA","PSNN"]

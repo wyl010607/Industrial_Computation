@@ -52,7 +52,7 @@ class StandardScaler(Scaler):
 
 
 class MinMaxScaler(Scaler):
-    def __init__(self, axis=0, min=None, max=None, *args, **kwargs):
+    def __init__(self, axis=2, min=None, max=None, *args, **kwargs):
         super(MinMaxScaler, self).__init__(axis)
         self.min = None
         self.max = None
@@ -64,12 +64,22 @@ class MinMaxScaler(Scaler):
         self.max = np.max(data, axis=self.axis)
 
     def transform(self, data, index=None):
+
         if not isinstance(data, np.ndarray):
             data = np.array(data, dtype=np.float32)
-
+        # print("data:\n{}".format(data.shape))
+        # print(self.min.shape)
         if index is None:
+            # print("index is None,return:\n{}".format((data - self.min) / (self.max - self.min)))
+            self.min = np.repeat(self.min, 128*512, axis=1)
+            self.min = self.min.reshape(data.shape)
+            self.max = np.repeat(self.max, 128*512, axis=1)
+            self.max = self.max.reshape(data.shape)
+            # print((self.max - self.min).shape)
+            
             return (data - self.min) / (self.max - self.min)
         else:
+            # print("index is {},return:\n{}".format(index,(data - self.min) / (self.max - self.min)))
             return (data - self.min[index]) / (self.max[index] - self.min[index])
 
     def inverse_transform(self, data, index=None):
@@ -80,3 +90,43 @@ class MinMaxScaler(Scaler):
             return data * (self.max - self.min) + self.min
         else:
             return data * (self.max[index] - self.min[index]) + self.min[index]
+        
+class DWTMinMaxScaler(Scaler):
+    def __init__(self, axis=(1,2), min=None, max=None, *args, **kwargs):
+        super(DWTMinMaxScaler, self).__init__(axis)
+        self.min = None
+        self.max = None
+
+    def fit(self, data):
+        if not isinstance(data, np.ndarray):
+            data = np.array(data, dtype=np.float32)
+        self.min = np.min(data, axis=self.axis)
+        self.max = np.max(data, axis=self.axis)
+
+    def transform(self, data, index=None):
+
+        if not isinstance(data, np.ndarray):
+            data = np.array(data, dtype=np.float32)
+        # print("data:\n{}".format(data.shape))
+        # print(self.min.shape)
+        if index is None:
+            # print("index is None,return:\n{}".format((data - self.min) / (self.max - self.min)))
+            self.min = self.min[:,np.newaxis,np.newaxis]
+            self.max = self.max[:,np.newaxis,np.newaxis]
+            # print((self.max - self.min).shape)
+            return (data - self.min) / (self.max - self.min)
+        else:
+            # print("index is {},return:\n{}".format(index,(data - self.min) / (self.max - self.min)))
+            return (data - self.min[index]) / (self.max[index] - self.min[index])
+
+    def inverse_transform(self, data, index=None):
+        if not isinstance(data, np.ndarray):
+            data = np.array(data, dtype=np.float32)
+
+        if index is None:
+            return data * (self.max - self.min) + self.min
+        else:
+            return data * (self.max[index] - self.min[index]) + self.min[index]
+        
+
+    

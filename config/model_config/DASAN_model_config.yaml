@@ -1,0 +1,4 @@
+DASAN:
+  backbone: ResNet1D
+  class_num: 10
+

@@ -1,0 +1,30 @@
+#This is an example of train_config.yaml
+
+# basic
+random_seed: 29
+batch_size: 200
+device: cuda:0
+load_checkpoint: False
+
+# Optimizer
+optimizer_name: Adam
+optimizer_params:
+  lr: 0.001
+  weight_decay: 0.0001
+
+# Scheduler
+scheduler_name: MultiStepLR
+scheduler_params:
+  milestones: [5, 20, 40, 70]
+  gamma: 0.8
+
+# Trainer
+trainer_name: DpadaTrainer
+trainer_params:
+  max_epoch_num: 40
+  early_stop: 20
+  metrics: accuracy
+  C: 23
+  alpha: 1
+  beta: 1
+  

@@ -13,7 +13,7 @@ import datasets
 import data_preprocessors
 
 from utils import scaler
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, TensorDataset
 
 
 def load_config(data_path):
@@ -46,41 +46,57 @@ def main(args):
     np.random.seed(random_seed)
     random.seed(random_seed)
 
-    # ----------------------- Load data ------------------------
+    # ----------------------,- Load data ------------------------
     data_preprocessor_class = getattr(
         sys.modules["data_preprocessors"], data_config["data_preprocessor_name"]
     )
     data_preprocessor = data_preprocessor_class(**data_config["data_preprocessor_params"])
     preprocessed_data = data_preprocessor.preprocess()
-
-    train_data, valid_data, test_data = data_preprocessor.split_data(preprocessed_data)
+    s_train_data, s_train_label, t_train_data, t_train_label, t_val_data, t_val_label, t_test_data, t_test_label = data_preprocessor.split_data(
+        preprocessed_data)
 
     # update model & trainer params
-    data_config["dataset_params"].update(data_preprocessor.update_dataset_params)
     model_config[args.model_name].update(data_preprocessor.update_model_params)
     train_config["trainer_params"].update(data_preprocessor.update_trainer_params)
 
     # scale data
     scaler_class = getattr(sys.modules["utils.scaler"], data_config["scaler_name"])
     scaler = scaler_class(**data_config["scaler_params"])
-    scaler.fit(train_data)
-    train_data = scaler.transform(train_data)
-    valid_data = scaler.transform(valid_data)
-    test_data = scaler.transform(test_data)
+    scaler.fit(s_train_data)
+    s_train_data = scaler.transform(s_train_data)
+    scaler.fit(t_train_data)
+    t_train_data = scaler.transform(t_train_data)
+    scaler.fit(t_val_data)
+    t_val_data = scaler.transform(t_val_data)
+    scaler.fit(t_test_data)
+    t_test_data = scaler.transform(t_test_data)
 
-    # dataset
-    dataset_class = getattr(sys.modules["datasets"], data_config["dataset_name"])
-    train_dataset = dataset_class(train_data, type="train", **data_config["dataset_params"])
-    valid_dataset = dataset_class(valid_data, type="valid", **data_config["dataset_params"])
-    test_dataset = dataset_class(test_data, type="test", **data_config["dataset_params"])
-    train_dataloader = DataLoader(
-        train_dataset, batch_size=batch_size, **data_config["dataloader_params"]
+    # 将其他几个变量从 NumPy 数组转换为 PyTorch 张量
+    s_train_data = torch.from_numpy(s_train_data)
+    s_train_label = torch.from_numpy(s_train_label)
+    t_train_data = torch.from_numpy(t_train_data)
+    t_train_label = torch.from_numpy(t_train_label)
+    t_val_data = torch.from_numpy(t_val_data)
+    t_val_label = torch.from_numpy(t_val_label)
+    t_test_data = torch.from_numpy(t_test_data)
+    t_test_label = torch.from_numpy(t_test_label)
+
+    s_train_dataset = TensorDataset(s_train_data, s_train_label)
+    t_train_dataset = TensorDataset(t_train_data, t_train_label)
+    t_val_dataset = TensorDataset(t_val_data, t_val_label)
+    t_test_dataset = TensorDataset(t_test_data, t_test_label)
+
+    s_train_dataloader = DataLoader(
+        s_train_dataset, batch_size=batch_size, **data_config["dataloader_params"]
+    )
+    t_train_dataloader = DataLoader(
+        t_train_dataset, batch_size=batch_size, **data_config["dataloader_params"]
     )
     valid_dataloader = DataLoader(
-        valid_dataset, batch_size=batch_size, **data_config["dataloader_params"]
+        t_val_dataset, batch_size=batch_size, **data_config["dataloader_params"]
     )
     test_dataloader = DataLoader(
-        test_dataset, batch_size=batch_size, **data_config["dataloader_params"]
+        t_test_dataset, batch_size=batch_size, **data_config["dataloader_params"]
     )
 
     # ------------------------- Model ---------------------------
@@ -89,7 +105,6 @@ def main(args):
     model_class = getattr(sys.modules["models"], args.model_name)
     model = model_class(**model_config[args.model_name])
     model.to(device)
-
     # ------------------------- Trainer -------------------------
 
     # Optimizer
@@ -133,10 +148,9 @@ def main(args):
 
     print("Start training.")
 
-    epoch_results = trainer.train(train_dataloader, valid_dataloader)
+    epoch_results = trainer.train(s_train_dataloader, t_train_dataloader, valid_dataloader)
     test_result, y_pred, y_true = trainer.test(test_dataloader)
 
-    # save y_pred, y_true to self.result_save_dir/y_pred.npy, y_true.npy
     np.save(os.path.join(result_save_dir_path, "test_y_pred.npy"), y_pred)
     np.save(os.path.join(result_save_dir_path, "test_y_true.npy"), y_true)
 
@@ -157,35 +171,35 @@ if __name__ == "__main__":
     parser.add_argument(
         "--train_config_path",
         type=str,
-        default="./config/train_config/SAE_train_config.yaml",
+        default="./config/train_config/DANN_train_config.yaml",
         help="Config path of Trainer",
     )
 
     parser.add_argument(
         "--model_config_path",
         type=str,
-        default="./config/model_config/SAEs_model_config.yaml",
+        default="./config/model_config/DANN_model_config.yaml",
         help="Config path of models",
     )
 
     parser.add_argument(
         "--data_config_path",
         type=str,
-        default="./config/data_config/Flash_config.yaml",
+        default="./config/data_config/CWRU_config.yaml",
         help="Config path of Data",
     )
-    parser.add_argument("--model_name", type=str, default="StackedAutoEncoder", help="Model name")
+    parser.add_argument("--model_name", type=str, default="DANN", help="Model name")
     parser.add_argument(
         "--model_save_path",
         type=str,
-        default="./model_states/StackedAutoEncoder.pkl",
+        default="./model_states/DANN.pkl",
         help="Model save path",
     )
 
     parser.add_argument(
         "--result_save_dir_path",
         type=str,
-        default="./results/StackedAutoEncoder",
+        default="./results/DANN",
         help="Result save path",
     )
     args = parser.parse_args()
