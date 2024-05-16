@@ -19,7 +19,7 @@ data_preprocessor_params:
   window: 512
   random_seed: 29
   class_num: 10
-  data_dimension : "DWT"
+  data_dimension : "1D"
 
 
 # Scaler

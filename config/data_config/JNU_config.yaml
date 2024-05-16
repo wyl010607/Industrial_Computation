@@ -12,13 +12,15 @@ data_preprocessor_params:
   # data names in every working conditions
   number_class: 4 
   fft: False
-  data_length: 1024
+  data_length: 1600
   window: 512
   random_seed: 29
+  data_dimension : '1D'
+  class_num : 4
 
 
 # Scaler
-scaler_name: MinMaxScaler
+scaler_name: DWTMinMaxScaler
 scaler_params:
   mean: 0
   std: 1

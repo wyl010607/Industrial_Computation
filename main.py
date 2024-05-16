@@ -185,7 +185,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--data_config_path",
         type=str,
-        default="./config/data_config/CWRU_config.yaml",
+        default="./config/data_config/JNU_config.yaml",
         help="Config path of Data",
     )
     parser.add_argument("--model_name", type=str, default="DANN", help="Model name")

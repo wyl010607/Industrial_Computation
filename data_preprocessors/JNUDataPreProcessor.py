@@ -76,9 +76,9 @@ class JNUDataPreprocessor(AbstractDataPreprocessor):
         ##t_path = self.data_path + "/Drive_end_" + str(self.t_load) + "/"
 
         # 加载源域数据
-        self.s_data, self.s_label = load_csv(self.data_path, self.s_load, self.s_label_set,self.domain_dict, self.data_length, self.window)                                        
+        self.s_data, self.s_label = load_csv(self.data_path, self.s_load, self.s_label_set,self.label_dict,self.domain_dict, self.data_length, self.window)                                        
         # 加载目标域数据
-        self.t_data, self.t_label = load_csv(self.data_path, self.t_load, self.t_label_set,self.domain_dict, self.data_length, self.window)
+        self.t_data, self.t_label = load_csv(self.data_path, self.t_load, self.t_label_set,self.label_dict,self.domain_dict, self.data_length, self.window)
 
     def preprocess(self):
         """
