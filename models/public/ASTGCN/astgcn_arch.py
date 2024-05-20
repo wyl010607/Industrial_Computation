@@ -297,6 +297,7 @@ class ASTGCN(torch.nn.Module):
         self.bias_block = bias_block
         self.bias_forecast_len = forecast_len
         self.Linear = nn.Linear(1, self.history_len)
+        self.bb = BIAS(self.history_len, self.bias_forecast_len, num_time_filter, K=2, adj=self.adj_mx)
 
     def forward(self, x, **kwargs):
         if self.first_time_conv:
@@ -315,11 +316,10 @@ class ASTGCN(torch.nn.Module):
             y_res = self.Linear(y.permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
             y_res = (y_res + x) * self.para
             input_bias = y_res
-        b_s, h_l, n_d, c = input_bias.size()
+        b_s, _, n_d, c = input_bias.size()
         if self.bias_block != 0:
             # print(self.bias_forecast_len)
-            bb = BIAS(b_s, h_l, n_d, c, self.bias_forecast_len, 2, self.adj_mx)
-            bias = bb(input_bias, self.bias_block)
+            bias = self.bb(input_bias, self.bias_block)
             # bias = torch.randn(32, 20, 37, 1)
         else:
             bias = torch.zeros(b_s, self.bias_forecast_len, n_d, c).to(x.device)

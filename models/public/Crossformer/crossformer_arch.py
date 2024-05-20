@@ -85,6 +85,8 @@ class Crossformer(nn.Module):
             factor=factor,
         )
         #self.Linear = nn.Linear(1, self.history_len)
+        self.num_time_filter = 64
+        self.bb = BIAS(self.history_len, self.bias_forecast_len, self.num_time_filter, K=2, adj=self.adj_mx)
 
     def forward(self, history_data: torch.Tensor, **kwargs) -> torch.Tensor:
         x_seq = history_data[:, :, :, 0]  # (batch_size, history_len, num_nodes)
@@ -124,10 +126,9 @@ class Crossformer(nn.Module):
             )
             y_res = (y_res + x) * self.para
             input_bias = y_res
-        b_s, h_l, n_d, c = input_bias.size()
+        b_s, _, n_d, c = input_bias.size()
         if self.bias_block != 0:
-            bb = BIAS(b_s, h_l, n_d, c, self.bias_forecast_len, 2, self.adj_mx)
-            bias = bb(input_bias, self.bias_block)
+            bias = self.bb(input_bias, self.bias_block)
             # bias = torch.randn(32, 20, 37, 1)
         else:
             bias = torch.zeros(b_s, self.bias_forecast_len, n_d, c).cuda()
