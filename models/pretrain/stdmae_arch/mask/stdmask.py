@@ -37,7 +37,9 @@ class STDMask(nn.Module):
         patch_method="patch",
         adj_mx=None,
         spatial=False,
+        neighbor_simplied_num=3,
         adjust_adj_mx=False,
+        mix_function="add",
         mode="pre-train",
     ):
         super().__init__()
@@ -52,7 +54,9 @@ class STDMask(nn.Module):
         self.mlp_ratio = mlp_ratio
         self.spatial = spatial
         self.selected_feature = 0
+        self.neighbor_simplied_num = neighbor_simplied_num
         self.patch_method = patch_method
+        self.mix_function = mix_function
         # norm layers
         self.encoder_norm = nn.LayerNorm(embed_dim)
         self.decoder_norm = nn.LayerNorm(embed_dim)
@@ -71,8 +75,9 @@ class STDMask(nn.Module):
                 embed_dim,
                 norm_layer=None,
                 adj_mx=adj_mx,
-                neighbor_simplied_num=3,
+                neighbor_simplied_num=neighbor_simplied_num,
                 adjust_adj_mx=adjust_adj_mx,
+                mix_function=mix_function,
             )
 
         # positional encoding to device

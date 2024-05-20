@@ -2,7 +2,7 @@
 
 # basic
 random_seed: 3407
-batch_size: 2
+batch_size: 24
 device: cuda:0
 load_checkpoint: False
 
@@ -36,8 +36,9 @@ trainer_params:
       mlp_ratio: 4
       dropout: 0.1
       mask_ratio: 0.25
-      patch_method: 'STpatch'
+      patch_method: STpatch
       adjust_adj_mx: true
+      mix_function: add
       encoder_depth: 4
       decoder_depth: 1
       spatial: True
@@ -51,8 +52,9 @@ trainer_params:
       mlp_ratio: 4
       dropout: 0.1
       mask_ratio: 0.25
-      patch_method: 'STpatch'
+      patch_method: STpatch
       adjust_adj_mx: true
+      mix_function: add
       encoder_depth: 4
       decoder_depth: 1
       spatial: False

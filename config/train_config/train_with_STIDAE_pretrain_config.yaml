@@ -36,8 +36,10 @@ trainer_params:
       mlp_ratio: 4
       dropout: 0.1
       low_rank: 10
-      low_rank_method: 'ae'
-      patch_method: 'STpatch'
+      low_rank_method: ae
+      patch_method: STpatch
+      adjust_adj_mx: true
+      mix_function: add
       ae_low_rank_hidden_list: [ 64, 32 ]
       noise_type: [ 'gaussian', 'uniform' ]
       noise_intensity: {
@@ -75,9 +77,11 @@ trainer_params:
       num_heads: 4
       mlp_ratio: 4
       low_rank: 10
-      low_rank_method: 'ae'
+      low_rank_method: ae
+      patch_method: STpatch
+      adjust_adj_mx: true
+      mix_function: add
       ae_low_rank_hidden_list: [ 64, 32 ]
-      patch_method: 'STpatch'
       dropout: 0.1
       noise_type: [ 'gaussian', 'uniform' ]
       noise_intensity: {

@@ -1,5 +1,6 @@
 from torch import nn
 import torch
+import torch.nn.functional as F
 
 
 class STPatchEmbedding(nn.Module):
@@ -14,6 +15,7 @@ class STPatchEmbedding(nn.Module):
         adj_mx,
         neighbor_simplied_num,
         adjust_adj_mx=False,
+        mix_function="add", # "add" or "linear"
     ):
         super().__init__()
         self.num_nodes = adj_mx.shape[0]
@@ -21,12 +23,21 @@ class STPatchEmbedding(nn.Module):
         self.len_patch = patch_size  # the L
         self.input_channel = in_channel
         self.neighbor_simplied_num = neighbor_simplied_num
-        self.input_embedding = nn.Conv2d(
-            in_channel * self.num_nodes,
-            embed_dim,
-            kernel_size=(self.len_patch, 1),
-            stride=(self.len_patch, 1),
-        )
+        self.mix_function = mix_function
+        if mix_function == "linear":
+            self.input_embedding = nn.Conv2d(
+                in_channel * self.num_nodes,
+                embed_dim,
+                kernel_size=(self.len_patch, 1),
+                stride=(self.len_patch, 1),
+            )
+        elif mix_function == "add":
+            self.input_embedding = nn.Conv2d(
+                in_channel,
+                embed_dim,
+                kernel_size=(self.len_patch, 1),
+                stride=(self.len_patch, 1),
+            )
         self.norm_layer = norm_layer if norm_layer is not None else nn.Identity()
 
         # Registering adj_mx as a parameter
@@ -64,12 +75,20 @@ class STPatchEmbedding(nn.Module):
         )  # Expand to [B, N, N, P*L]
         neighbors_data = sampled_adj_mask.unsqueeze(0).unsqueeze(-1) * expanded_history
         #neighbors_data = self.neighbor_aggregation(neighbors_data.transpose(-1,-2)).squeeze(-1)
-        neighbors_data = neighbors_data.reshape(
-            batch_size * num_nodes,
-            num_nodes,
-            len_time_series,
-            1,
-        )
+        if self.mix_function == "linear":
+            neighbors_data = neighbors_data.reshape(
+                batch_size * num_nodes,
+                num_nodes,
+                len_time_series,
+                1,
+            )
+        elif self.mix_function == "add":
+            neighbors_data = neighbors_data.sum(dim=2).reshape(
+                batch_size * num_nodes,
+                1,
+                len_time_series,
+                1,
+            )
 
         # Convolution and normalization
         output = self.input_embedding(neighbors_data)
@@ -95,7 +114,7 @@ class STPatchEmbedding(nn.Module):
 
         gumbel_noise = -torch.log(-torch.log(torch.rand_like(adj_mx) + 1e-8))
         gumbel_logits = (logits + gumbel_noise) / tau
-        soft_masks = torch.softmax(gumbel_logits, dim=1)
+        soft_masks = F.softmax(gumbel_logits, dim=1)
 
         topk_values, topk_indices = torch.topk(soft_masks, k, dim=1)
         mask = torch.zeros_like(soft_masks).scatter_(1, topk_indices, 1)

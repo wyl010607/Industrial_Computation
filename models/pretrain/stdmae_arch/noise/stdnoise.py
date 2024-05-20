@@ -37,6 +37,9 @@ class STDNoise(nn.Module):
         encoder_depth,
         decoder_depth,
         patch_method="patch",
+        neighbor_simplied_num=3,
+        adjust_adj_mx=False,
+        mix_function="add",
         adj_mx=None,
         spatial=False,
         mode="pre-train",
@@ -58,7 +61,9 @@ class STDNoise(nn.Module):
         self.mlp_ratio = mlp_ratio
         self.spatial = spatial
         self.selected_feature = 0
+        self.neighbor_simplied_num = neighbor_simplied_num
         self.patch_method = patch_method
+        self.mix_function = mix_function
         # norm layers
         self.encoder_norm = nn.LayerNorm(embed_dim)
         self.decoder_norm = nn.LayerNorm(embed_dim)
@@ -77,8 +82,9 @@ class STDNoise(nn.Module):
                 embed_dim,
                 norm_layer=None,
                 adj_mx=adj_mx,
-                neighbor_simplied_num=3,
-                adjust_adj_mx=False,
+                neighbor_simplied_num=neighbor_simplied_num,
+                adjust_adj_mx=adjust_adj_mx,
+                mix_function=mix_function,
             )
 
         # positional encoding to device
