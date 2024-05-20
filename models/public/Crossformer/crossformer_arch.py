@@ -84,7 +84,7 @@ class Crossformer(nn.Module):
             out_seg_num=(self.pad_out_len // seg_len),
             factor=factor,
         )
-        self.Linear = nn.Linear(1, self.history_len)
+        #self.Linear = nn.Linear(1, self.history_len)
 
     def forward(self, history_data: torch.Tensor, **kwargs) -> torch.Tensor:
         x_seq = history_data[:, :, :, 0]  # (batch_size, history_len, num_nodes)

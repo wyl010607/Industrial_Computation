@@ -322,5 +322,5 @@ class ASTGCN(torch.nn.Module):
             bias = bb(input_bias, self.bias_block)
             # bias = torch.randn(32, 20, 37, 1)
         else:
-            bias = torch.zeros(b_s, self.bias_forecast_len, n_d, c).cuda()
+            bias = torch.zeros(b_s, self.bias_forecast_len, n_d, c).to(x.device)
         return y, bias
