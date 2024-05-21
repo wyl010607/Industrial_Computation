@@ -20,11 +20,11 @@ class PSNN(nn.Module):
         
 
         # Classifier
-        self.classifier1 = Classifier(self.class_num)
-        self.classifier2 = Classifier(self.class_num)
+        self.classifier1 = Classifier(self.class_num,self.dimension)
+        self.classifier2 = Classifier(self.class_num,self.dimension)
 
         # Domain Discriminator
-        self.domain_discriminator = Discriminator()
+        self.domain_discriminator = Discriminator(self.dimension)
 
     def forward(self, data: torch.Tensor,train: bool, **kwargs):
         if train:

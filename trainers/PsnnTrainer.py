@@ -72,10 +72,11 @@ class PsnnTrainer(AbstractTrainer):
     def train_one_epoch(self, s_data_loader, t_data_loader):
         self.model.train()
         total_loss = 0
-        optimizer_c1 = optim.SGD(self.model.classifier1.parameters(), lr=0.001)
-        optimizer_c2 = optim.SGD(self.model.classifier2.parameters(), lr=0.001)
-        optimizer_g = optim.SGD(self.model.feature_extractor.parameters(), lr=0.001)
-        optimizerd = optim.SGD(self.model.domain_discriminator.parameters(), lr=0.001)
+        learning_rate = 0.0005
+        optimizer_c1 = optim.SGD(self.model.classifier1.parameters(), lr=learning_rate)
+        optimizer_c2 = optim.SGD(self.model.classifier2.parameters(), lr=learning_rate)
+        optimizer_g = optim.SGD(self.model.feature_extractor.parameters(), lr=learning_rate)
+        optimizerd = optim.SGD(self.model.domain_discriminator.parameters(), lr=learning_rate)
 
         with tqdm(total=len(t_data_loader), leave=False) as pbar:
             # batch
@@ -99,11 +100,14 @@ class PsnnTrainer(AbstractTrainer):
                 classification_loss1 = nn.CrossEntropyLoss()(class_pred1.narrow(0, 0, batch_num), s_y.long())
                 
                 classification_loss2 = nn.CrossEntropyLoss()(class_pred2.narrow(0, 0, batch_num), s_y.long())
-                
+                adversarial_loss = nn.BCELoss()(domain_pred.squeeze(), domain_label)
+
+                loss_s = classification_loss1+classification_loss2
+                optimizer_g.zero_grad()
                 optimizer_c1.zero_grad()
                 optimizer_c2.zero_grad()
-                classification_loss1.backward(retain_graph=True)
-                classification_loss2.backward()
+                loss_s.backward()
+                optimizer_g.step()
                 optimizer_c1.step()
                 optimizer_c2.step()
 
@@ -117,12 +121,15 @@ class PsnnTrainer(AbstractTrainer):
                 #CDD =  torch.sum(torch.matmul(class_pred1.unsqueeze(1), class_pred1.unsqueeze(2))-torch.matmul(class_pred1.unsqueeze(1), class_pred2.unsqueeze(2)))   
                 CDD = torch.dist(class_pred1,class_pred2,p=1)*0.5
                 
-                CDD = CDD/batch_num/100
-                
-                divergence_loss = nn.CrossEntropyLoss()(class_pred1.narrow(0, 0, batch_num), s_y.long())+nn.CrossEntropyLoss()(class_pred2.narrow(0, 0, batch_num), s_y.long())-CDD
-                optimizer_g.zero_grad()
+                CDD = CDD/batch_num/1000
+                lc = nn.CrossEntropyLoss()(class_pred1.narrow(0, 0, batch_num), s_y.long())+nn.CrossEntropyLoss()(class_pred2.narrow(0, 0, batch_num), s_y.long())
+                divergence_loss = lc-CDD
+                optimizer_c1.zero_grad()
+                optimizer_c2.zero_grad()
+
                 divergence_loss.backward()
-                optimizer_g.step()
+                optimizer_c1.step()
+                optimizer_c2.step()
 
                 
                 
@@ -130,17 +137,17 @@ class PsnnTrainer(AbstractTrainer):
                 domain_pred, class_pred1,class_pred2 = self.model(inputs, train=True)
                 #CDD =  torch.sum(torch.matmul(class_pred1.unsqueeze(1), class_pred1.unsqueeze(2))-torch.matmul(class_pred1.unsqueeze(1), class_pred2.unsqueeze(2)))              
                 CDD = torch.dist(class_pred1,class_pred2,p=1)*0.5
-                CDD = CDD/batch_num/100
-                
+                CDD = CDD/batch_num/1000
+                lc = nn.CrossEntropyLoss()(class_pred1.narrow(0, 0, batch_num), s_y.long())+nn.CrossEntropyLoss()(class_pred2.narrow(0, 0, batch_num), s_y.long())
                 #print(CDD)
-                divergence_loss1 = CDD
-                divergence_loss2 = CDD
-                optimizer_c1.zero_grad()
-                optimizer_c2.zero_grad()
+                divergence_loss1 = CDD +lc
+                divergence_loss2 = CDD +lc
+                optimizer_g.zero_grad()
+                
                 divergence_loss1.backward(retain_graph = True)
                 divergence_loss2.backward()
-                optimizer_c1.step()
-                optimizer_c2.step()
+                optimizer_g.step()
+                
 
 
 

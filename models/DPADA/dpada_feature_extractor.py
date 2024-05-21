@@ -69,5 +69,5 @@ class Feature_extractor(nn.Module):
         
         high_feature = self.encoder(x)
 
-        low_feature = self.high_low(x)
+        low_feature = self.high_low(high_feature)
         return low_feature,high_feature

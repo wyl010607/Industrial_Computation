@@ -2,9 +2,10 @@ import numpy as np
 import os
 from scipy.io import loadmat
 from tqdm import tqdm
+from random import sample
 
 
-def load_npz(path, load, label_set, data_dict):
+def load_npz(path, load, label_set, data_dict,sample_rate = 0.5):
     dataset = {label: [] for label in label_set}
     datalist = os.listdir(path)
     data, labels = [], []
@@ -21,7 +22,8 @@ def load_npz(path, load, label_set, data_dict):
                 break
         if find == False:print('ERROR')    
         npz_data = np.load(data_path)
-        for i in range(len(npz_data)):
+        sample_list = sample(range(len(npz_data)),int(sample_rate*len(npz_data)))
+        for i in sample_list:
             data_name = data_name.split('.')[0]
             image_name = data_name+'_{'+str(i)+'}'
             complexdata = npz_data[image_name]

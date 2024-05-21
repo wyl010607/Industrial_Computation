@@ -100,7 +100,7 @@ class DannTrainer(AbstractTrainer):
                 self.optimizer.step()
                 pbar.set_description("loss is {:.4f}".format(loss.item()))
                 pbar.update()
-                total_loss += loss.item()
+                total_loss += classification_loss.item()
 
         return total_loss / len(t_data_loader)
 

@@ -7,6 +7,10 @@ data_preprocessor_params:
   t_load: 1
   label_dict : ['n','ib','tb','ob']
   domain_dict: ['600','800','1000']
+  data_dict: { 0:['ib600_2.csv','n600_2.csv','ob600_2.csv','tb600_2.csv'],
+               1:['ib800_2.csv','n800_2.csv','ob800_2.csv','tb800_2.csv'],
+               2:['ib1000_2.csv','n1000_2.csv','ob1000_2.csv','tb1000_2.csv']
+               }
   s_label_set: [ 0,1,2,3]
   t_label_set: [ 0,1,2,3]
   # data names in every working conditions

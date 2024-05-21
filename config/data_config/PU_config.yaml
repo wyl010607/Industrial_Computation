@@ -10,7 +10,7 @@ data_preprocessor_params:
   t_load: 1
   s_label_set: [ 0,1,2,3 ]
   t_label_set: [ 0,1,2,3 ]
-  num_class:
+  class_num: 4
   feature_name: _DE_time
   work_state : ["N15_M07_F10", "N09_M07_F10", "N15_M01_F10", "N15_M07_F04"]
   # data names in fault type
@@ -22,6 +22,7 @@ data_preprocessor_params:
   data_length: 4096
   window: 2048
   random_seed: 29
+  data_dimension : "1D"
 
 
 # Scaler

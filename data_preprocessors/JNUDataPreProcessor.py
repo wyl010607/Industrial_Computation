@@ -1,6 +1,7 @@
 import numpy as np
 from .abs import AbstractDataPreprocessor
 from utils.load_csv import load_csv
+from utils.load_npz import load_npz
 from sklearn.model_selection import train_test_split
 
 
@@ -74,12 +75,17 @@ class JNUDataPreprocessor(AbstractDataPreprocessor):
 
         #s_path = self.data_path + "t/Drive_end_" + str(self.s_load) + "/"
         ##t_path = self.data_path + "/Drive_end_" + str(self.t_load) + "/"
-
+        if self.data_dimension == 'DWT':
+            s_path = self.data_path+"/DWT/"+str(self.s_load)
+            t_path = self.data_path+"/DWT/"+str(self.t_load)
+            self.s_data,self.s_label = load_npz(s_path,self.s_load,self.s_label_set,self.name_dict)
+            self.t_data,self.t_label = load_npz(t_path,self.t_load,self.t_label_set,self.name_dict)
         # 加载源域数据
-        self.s_data, self.s_label = load_csv(self.data_path, self.s_load, self.s_label_set,self.label_dict,self.domain_dict, self.data_length, self.window)                                        
-        # 加载目标域数据
-        self.t_data, self.t_label = load_csv(self.data_path, self.t_load, self.t_label_set,self.label_dict,self.domain_dict, self.data_length, self.window)
-
+        else:
+            self.s_data, self.s_label = load_csv(self.data_path, self.s_load, self.s_label_set,self.label_dict,self.domain_dict, self.data_length, self.window)                                        
+            # 加载目标域数据
+            self.t_data, self.t_label = load_csv(self.data_path, self.t_load, self.t_label_set,self.label_dict,self.domain_dict, self.data_length, self.window)
+        
     def preprocess(self):
         """
         Preprocess the loaded data.

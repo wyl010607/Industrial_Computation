@@ -12,17 +12,26 @@ def calc_coeff(iter_num, high=1.0, low=0.0, alpha=10.0, max_iter=10000.0):
     return np.float(2.0 * (high - low) / (1.0 + np.exp(-alpha * iter_num / max_iter)) - (high - low) + low)
 
 class Discriminator(nn.Module):
-    def __init__(self, num_out=1, max_iter=10000.0, trade_off_adversarial='Cons', lam_adversarial=1.0):
+    def __init__(self, dimension,num_out=1, max_iter=10000.0, trade_off_adversarial='Cons', lam_adversarial=1.0):
         super(Discriminator, self).__init__()
-        
-        self.domain_classifier = nn.Sequential(
-            nn.Linear(1344, 128, nn.Dropout(0.5)),
-            nn.BatchNorm1d(128),
-            nn.ReLU(),
-            nn.Linear(128, num_out)
-            )
-        
-        self.sigmoid = nn.Sigmoid()
+        if dimension == "DWT":
+            self.domain_classifier = nn.Sequential(
+                nn.Linear(32768, 128, nn.Dropout(0.5)),
+                nn.BatchNorm1d(128),
+                nn.ReLU(),
+                nn.Linear(128, num_out)
+                )
+            
+            self.sigmoid = nn.Sigmoid()
+        else:
+            self.domain_classifier = nn.Sequential(
+                nn.Linear(1344, 128, nn.Dropout(0.5)),
+                nn.BatchNorm1d(128),
+                nn.ReLU(),
+                nn.Linear(128, num_out)
+                )
+            
+            self.sigmoid = nn.Sigmoid()
 
         # parameters
         self.iter_num = 0

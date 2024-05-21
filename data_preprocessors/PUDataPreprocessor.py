@@ -1,6 +1,7 @@
 import numpy as np
 from .abs import AbstractDataPreprocessor
 from utils.load_mat import load_mat
+from utils.load_pu import load_pu
 from sklearn.model_selection import train_test_split
 
 
@@ -74,11 +75,11 @@ class PUDataPreprocessor(AbstractDataPreprocessor):
         """
         print("0")
         # 加载源域数据
-        self.s_data, self.s_label = load_mat(self.data_path, self.s_label_set, self.work_state[self.s_load],
+        self.s_data, self.s_label = load_pu(self.data_path, self.s_label_set, self.work_state[self.s_load],
                                              self.name_dict, self.data_length, self.window)
         print("1")
         # 加载目标域数据
-        self.t_data, self.t_label = load_mat(self.data_path, self.t_label_set, self.work_state[self.s_load],
+        self.t_data, self.t_label = load_pu(self.data_path, self.t_label_set, self.work_state[self.s_load],
                                              self.name_dict, self.data_length, self.window)
         print("2")
 

@@ -185,21 +185,21 @@ if __name__ == "__main__":
     parser.add_argument(
         "--data_config_path",
         type=str,
-        default="./config/data_config/JNU_config.yaml",
+        default="./config/data_config/CWRU_config.yaml",
         help="Config path of Data",
     )
     parser.add_argument("--model_name", type=str, default="DANN", help="Model name")
     parser.add_argument(
         "--model_save_path",
         type=str,
-        default="./model_states/DANN.pkl",
+        default="./model_states/DANN_PU.pkl",
         help="Model save path",
     )
 
     parser.add_argument(
         "--result_save_dir_path",
         type=str,
-        default="./results/DANN",
+        default="./results/DANN_PU",
         help="Result save path",
     )
     args = parser.parse_args()

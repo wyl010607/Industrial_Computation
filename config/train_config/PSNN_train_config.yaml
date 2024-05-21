@@ -1,11 +1,10 @@
 #This is an example of train_config.yaml
 
 # basic
-random_seed: 29
-batch_size: 200
+random_seed: 37
+batch_size: 50
 device: cuda:0
-load_checkpoint: False
-
+load_checkpoint: True
 # Optimizer
 optimizer_name: SGD
 optimizer_params:
@@ -27,4 +26,5 @@ trainer_params:
   C: 23
   alpha: 1
   beta: 1
+  learning_rate: 0.001
   

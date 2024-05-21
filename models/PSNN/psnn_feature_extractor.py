@@ -13,7 +13,7 @@ class Feature_extractor(nn.Module):
                 nn.Conv2d(in_channels=32,out_channels=64,kernel_size=3,stride=2),
                 nn.AdaptiveMaxPool2d((16,32)),
                 nn.Flatten(), 
-                nn.Linear(512*128,1344)
+                
                 
             )
         else:
@@ -30,7 +30,8 @@ class Feature_extractor(nn.Module):
                 nn.Conv1d(64, 64, kernel_size=(5), stride=1),
                 nn.ReLU(),
                 nn.MaxPool1d(kernel_size=2, stride=2),
-                nn.Flatten()
+                nn.Flatten(),
+                
             )
 
 
