@@ -1,10 +1,10 @@
 import json
 import os
 from shutil import copyfile
-
+import matplotlib.pyplot as plt
 import torch
 from abc import ABC, abstractmethod
-
+import numpy as np
 from utils.early_stop import EarlyStop
 import utils.metrics as metrics_module
 
@@ -34,8 +34,8 @@ class AbstractTrainer(ABC):
         model_save_path,
         result_save_dir_path,
         max_epoch_num,
-        enable_early_stop=False,
-        early_stop_patience=5,
+        enable_early_stop=True,
+        early_stop_patience=50,
         early_stop_min_is_best=True,
         *args,
         **kwargs,
@@ -87,7 +87,8 @@ class AbstractTrainer(ABC):
         self,
         train_data_loader,
         eval_data_loader,
-        metrics=("mae", "rmse", "mape"),
+        
+        metrics=("rmse","mae"),
         *args,
         **kwargs,
     ):
@@ -119,7 +120,8 @@ class AbstractTrainer(ABC):
             self.epoch_now += 1
             print(f"Train loss: {train_loss:.4f}")
             # evaluate
-            eval_loss, metrics_evals, _, _ = self.evaluate(eval_data_loader, metrics)
+            eval_loss, metrics_evals, _, _ = self.evaluate(eval_data_loader,False, metrics)
+            print(f"eval loss: {eval_loss:.4f}")
             epoch_result_list.append(
                 [epoch, train_loss, eval_loss, list(metrics_evals)]
             )
@@ -142,10 +144,11 @@ class AbstractTrainer(ABC):
 
         copyfile(tmp_state_save_path, self.model_save_path)
         os.remove(tmp_state_save_path)
+
         epoch_result_json = self._save_epoch_result(epoch_result_list)  # 保存epoch结果
         return epoch_result_json
 
-    def test(self, test_data_loader, metrics=("mae", "rmse", "mape"), *args, **kwargs):
+    def test(self, test_data_loader, metrics=( "rmse","mae"), *args, **kwargs):
         """
         Test the model using the provided test data loader.
         Parameters
@@ -169,8 +172,19 @@ class AbstractTrainer(ABC):
         self.model.load_state_dict(torch.load(self.model_save_path))
         # evaluate on test set
         test_loss, metrics_evals, y_pred, y_true = self.evaluate(
-            test_data_loader, metrics
+            test_data_loader,True ,metrics
         )
+        
+        plt.plot(np.arange(1,len(y_true)+1), y_true, label= 'TrueRUL')
+        plt.plot(np.arange(1,len(y_pred)+1), y_pred, label = 'PedictionRUL')
+        plt.legend()
+        plt.grid()
+        plt.xlabel('NO.')
+        plt.ylabel('RUL')
+        plt.ion()
+        plt.pause(600000)
+        plt.close()
+
         test_result = {"loss": test_loss}
         for metric_name, metric_eval in metrics_evals:
             test_result[metric_name] = metric_eval
@@ -214,10 +228,26 @@ class AbstractTrainer(ABC):
         """
         # save loss and metrics for each epoch to self.result_save_dir/epoch_result.json
         epoch_result = {}
+        T = []
+        V = []
         for epoch, train_loss, eval_loss, metrics_evals in epoch_result_list:
             epoch_result[epoch] = {"train_loss": train_loss, "eval_loss": eval_loss}
+            T.append(train_loss)
+            V.append(eval_loss)
+
             for metric_name, metric_eval in metrics_evals:
                 epoch_result[epoch][metric_name] = metric_eval
+
+        plt.plot(np.arange(1,len(T)+1), T, label= 'Train loss')
+        plt.plot(np.arange(1,len(V)+1), V, label = 'Validation loss')
+        plt.legend()
+        plt.grid()
+        plt.xlabel('Epochs')
+        plt.ylabel('loss')
+        plt.ion()
+        plt.pause(600000)
+        plt.close()
+        
         with open(
             os.path.join(self.result_save_dir_path, "epoch_result.json"), "w"
         ) as f:
@@ -259,7 +289,7 @@ class AbstractTrainer(ABC):
         pass
 
     @abstractmethod
-    def evaluate(self, data_loader, metrics, *args, **kwargs):
+    def evaluate(self, data_loader,min,max,test, metrics, *args, **kwargs):
         """
         Abstract method for evaluating the model.
 
@@ -316,6 +346,6 @@ class AbstractTrainer(ABC):
                 )
 
             result = eval_func(y_pred, y_true)
-            eval_results.append(result)
+            eval_results.append(float(result))
 
         return eval_results

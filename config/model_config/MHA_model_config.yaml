@@ -1,0 +1,14 @@
+MultiHeadAttentionLSTM:
+  sequence_len: 30
+  feature_num: 24
+  hidden_dim: 100
+  cell: 'lstm'
+  fc_layer_dim: 100
+  rnn_num_layers: 3
+  output_dim: 1
+  fc_activation: 'relu'
+  attention_order: []
+  bidirectional: False
+  feature_head_num: 10
+  fc_dropout: 0.5
+  

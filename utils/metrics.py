@@ -24,6 +24,13 @@ def get_rmse(y_true, y_pred):
     """
     return np.sqrt(((y_true - y_pred) ** 2).mean())
 
+def get_score(y_true, y_pred):
+    a1 = 13
+    a2 = 10
+    error = y_pred - y_true
+    pos_e = np.exp(-error[error < 0] / a1) - 1
+    neg_e = np.exp(error[error >= 0] / a2) - 1
+    return sum(pos_e) + sum(neg_e)
 
 def get_mape(y_true, y_pred):
     """

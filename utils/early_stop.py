@@ -5,8 +5,10 @@ class EarlyStop:
     def __init__(self, patience, min_is_best):
         self.patience = patience
         self.min_is_best = min_is_best
-
-        self.count, self.cur_values = None, None
+        self.count = None
+        finfo = np.finfo(np.float32)
+        self.cur_values = finfo.max if self.min_is_best else finfo.min
+        self.cur_values = None
         self.reset()
 
     def reset(self):
@@ -21,5 +23,6 @@ class EarlyStop:
             self.count = self.count + 1 if cur_value <= self.cur_value else 0
         if self.count == self.patience:
             return True
-        self.cur_value = cur_value
+        if cur_value <= self.cur_value:
+          self.cur_value = cur_value
         return False

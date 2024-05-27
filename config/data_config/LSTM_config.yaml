@@ -1,0 +1,16 @@
+# This is an example of data_config.yaml
+
+# Scaler
+scaler_name: StandardScaler
+scaler_params:
+  mean: 0
+  std: 1
+
+# Dataset
+dataset_name: LSTMDataset
+dataset_params:
+  data_path: "./data"
+  sub_dataset: "FD001"
+dataloader_params:
+  
+

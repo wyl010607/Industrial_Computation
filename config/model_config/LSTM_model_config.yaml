@@ -1,0 +1,3 @@
+LSTMRegressor:
+  n_features : 16
+  hidden_units : 12

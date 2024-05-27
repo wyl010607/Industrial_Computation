@@ -10,11 +10,11 @@ class AbstractDataset(Dataset, ABC):
     `__getitem__`, and `__len__` methods.
     """
 
-    def __init__(self, data, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         """
         Initialize the AbstractDataset.
         """
-        self.data = data
+        
 
     @abstractmethod
     def __getitem__(self, index):
