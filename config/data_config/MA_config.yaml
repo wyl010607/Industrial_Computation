@@ -24,7 +24,7 @@ dataset_params:
   return_sequence_label: False
   return_id: True
   emd : True
-  emd_num : 3
+  emd_num : 2
 
 dataloader_params:
   shuffle: False

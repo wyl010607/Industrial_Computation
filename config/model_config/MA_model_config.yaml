@@ -11,7 +11,7 @@ ModeAttention:
   bidirectional: False
   feature_head_num: 10
   fc_dropout: 0.5
-  emd_num : 3
+  emd_num : 2
   hidden_num : 10
   dropout_prob : 0.5
   mlp_num : 3

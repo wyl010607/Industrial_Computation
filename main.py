@@ -194,35 +194,35 @@ if __name__ == "__main__":
     parser.add_argument(
         "--train_config_path",
         type=str,
-        default="./config/train_config/MHA_train_config.yaml",
+        default="./config/train_config/MA_train_config.yaml",
         help="Config path of Trainer",
     )
 
     parser.add_argument(
         "--model_config_path",
         type=str,
-        default="./config/model_config/MHA_model_config.yaml",
+        default="./config/model_config/MA_model_config.yaml",
         help="Config path of models",
     )
 
     parser.add_argument(
         "--data_config_path",
         type=str,
-        default="./config/data_config/MHA_config.yaml",
+        default="./config/data_config/MA_config.yaml",
         help="Config path of Data",
     )
-    parser.add_argument("--model_name", type=str, default="MultiHeadAttentionLSTM", help="Model name")
+    parser.add_argument("--model_name", type=str, default="ModeAttention", help="Model name")
     parser.add_argument(
         "--model_save_path",
         type=str,
-        default="./model_states/MHA_FD004.pkl",
+        default="./model_states/MA.pkl",
         help="Model save path",
     )
 
     parser.add_argument(
         "--result_save_dir_path",
         type=str,
-        default="./results/MHA_FD004",
+        default="./results/MA",
         help="Result save path",
     )
     args = parser.parse_args()
