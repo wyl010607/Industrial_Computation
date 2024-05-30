@@ -1,0 +1,28 @@
+
+# data_preprocessors
+data_preprocessor_name: DCDataPreprocessor
+data_preprocessor_params:
+  data_train_path_s: "data/SWaT/SWaT_Dataset_Normal_v1.csv"
+  data_test_path_s: "data/SWaT/SWaT_Dataset_Attack_v0.csv"
+  data_train_path_w: "data/WADI/WADI_14days.csv"
+  data_test_path_w: "data/WADI/WADI_attackdata.csv"
+  window: 5
+  step: 1
+  flag: "train"
+  dataset: "swat"
+  ignore: (10,)
+  meta_batch: 150
+  support_num: 5
+  query_num: 10
+
+# Scaler
+scaler_name: StandardScaler
+scaler_params:
+  mean: 0
+  std: 1
+
+dataloader_params:
+  shuffle: True
+  num_workers: 8
+  pin_memory: True
+  drop_last: False

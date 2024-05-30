@@ -1,0 +1,25 @@
+# This is an example of data_config.yaml
+
+# data_preprocessors
+data_preprocessor_name: GDNSDataPreprocessor
+data_preprocessor_params:
+  data_train_path: "data/SWaT/SWaT_Dataset_Normal_v1.csv"
+  data_test_path: "data/SWaT/SWaT_Dataset_Attack_v0.csv"
+  slide_window: 5
+  slide_stride: 1
+  down_ratio: 10
+  val_ratio: 0.1
+  edge_index: []
+  mode: "train"
+
+# Scaler
+scaler_name: MinMaxScaler
+scaler_params:
+  min: 0
+  max: 1
+
+dataloader_params:
+  shuffle: True
+  num_workers: 0
+  pin_memory: True
+  drop_last: False

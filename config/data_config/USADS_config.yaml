@@ -1,0 +1,22 @@
+# This is an example of data_config.yaml
+
+# data_preprocessors
+data_preprocessor_name: USADSDataPreprocessor
+data_preprocessor_params:
+  data_train_path: "data/SWaT/SWaT_Dataset_Normal_v1.csv"
+  data_test_path: "data/SWaT/SWaT_Dataset_Attack_v0.csv"
+  window: 10
+  w_size: 612
+  z_size: 480
+
+# Scaler
+scaler_name: MinMaxScaler
+scaler_params:
+  min: 0
+  max: 1
+
+dataloader_params:
+  shuffle: False
+  num_workers: 0
+  pin_memory: True
+  drop_last: False
