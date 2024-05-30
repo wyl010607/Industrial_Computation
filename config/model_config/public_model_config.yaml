@@ -60,3 +60,59 @@ Crossformer:
   dropout: 0.2,
   baseline: False
 
+USAD:
+  w_size: 51 * 12
+  z_size: 12 * 40
+  hidden_size: 40
+  batch: 1000
+
+GDN:
+  dataset: 'swat'
+  list_path: f'data/list.txt'
+  max: 3
+  min: 3
+  label: 0
+  dim: 64
+  out_layer_num: 1
+  topk: 15
+  out_layer_inter_dim: 128
+  input_dim: 10
+  edge_index_sets: []
+  node_num: 51
+
+DCdetector:
+  d_model: 256
+  max_len: 5000
+  enc_in: 9
+  c_out: 9
+  win_size: 100
+  patch_size: [1,3,5]
+  n_heads: 1
+  e_layers: 3
+  channel: 55
+  activation: "gelu"
+  mode: "norm"
+
+MCdetector:
+  d_model: 256
+  max_len: 5000
+  win_size: 100
+  patch_size: [3,5,7]
+  channel: 55
+  e_layer: 3
+  activation: "gelu"
+  norm: 'ln'
+  mode: "norm"
+  jump_conn: "proj"
+
+MetaMCdetector:
+  d_model: 256
+  max_len: 5000
+  win_size: 100
+  patch_size: [3,5,7]
+  channel: 55
+  e_layer: 3
+  activation: "gelu"
+  norm: 'ln'
+  mode: "norm"
+  jump_conn: "proj"
