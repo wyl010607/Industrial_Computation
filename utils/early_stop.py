@@ -12,14 +12,21 @@ class EarlyStop:
     def reset(self):
         self.count = 0
         finfo = np.finfo(np.float32)
-        self.cur_value = finfo.max if self.min_is_best else finfo.min
+        self.best_value = finfo.max if self.min_is_best else finfo.min
 
     def reach_stop_criteria(self, cur_value):
         if self.min_is_best:
-            self.count = self.count + 1 if cur_value >= self.cur_value else 0
+            update_best = cur_value <= self.best_value
         else:
-            self.count = self.count + 1 if cur_value <= self.cur_value else 0
+            update_best = cur_value >= self.best_value
+
+        if update_best:
+            self.best_value = cur_value
+            self.count = 0
+        else:
+            self.count += 1
+
         if self.count == self.patience:
             return True
-        self.cur_value = cur_value
+
         return False
