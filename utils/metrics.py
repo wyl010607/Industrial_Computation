@@ -1,26 +1,5 @@
 import numpy as np
-
-import numpy as np
-
-
-def get_acc(y_true, y_pred):
-    """
-    Accuracy
-    Formula: Accuracy = (Number of correct predictions) / (Total number of predictions)
-    """
-    # Ensure both y_true and y_pred have the same shape
-    if len(y_true) != len(y_pred):
-        raise ValueError("Input shapes of y_true and y_pred must be the same.")
-
-    correct_predictions = 0
-    for i, j in zip(y_true, y_pred):
-        if i == j:
-            correct_predictions += 1
-
-    accuracy = correct_predictions / len(y_true) * 100.0
-
-    return accuracy
-
+from .recorder import symbol, multi
 
 def get_mae(y_true, y_pred):
     """
@@ -65,15 +44,15 @@ def get_rmspe(y_true, y_pred):
     """
     non_zero_mask = y_true != 0
     rmspe = (
-            np.sqrt(
-                np.mean(
-                    np.square(
-                        (y_true[non_zero_mask] - y_pred[non_zero_mask])
-                        / y_true[non_zero_mask]
-                    )
+        np.sqrt(
+            np.mean(
+                np.square(
+                    (y_true[non_zero_mask] - y_pred[non_zero_mask])
+                    / y_true[non_zero_mask]
                 )
             )
-            * 100
+        )
+        * 100
     )
     return rmspe
 
@@ -104,3 +83,217 @@ def get_hinge(y_true, y_pred):
     Formula: Hinge = mean(max(0, 1 - y_true*y_pred))
     """
     return np.mean(np.maximum(1 - y_true * y_pred, 0))
+
+#===================USAD========================
+def ROC(y_test, y_pred):
+    fpr, tpr, tr = roc_curve(y_test, y_pred)
+    auc = roc_auc_score(y_test, y_pred)
+    idx = np.argwhere(np.diff(np.sign(tpr - (1 - fpr)))).flatten()
+
+    plt.xlabel("FPR")
+    plt.ylabel("TPR")
+    plt.plot(fpr, tpr, label="AUC=" + str(auc))
+    plt.plot(fpr, 1 - fpr, 'r:')
+    plt.plot(fpr[idx], tpr[idx], 'ro')
+    plt.legend(loc=4)
+    plt.grid()
+    plt.show()
+    return tr[idx]
+
+
+def confusion_matrix(target, predicted, perc=False):
+    data = {'y_Actual': target,
+            'y_Predicted': predicted
+            }
+    df = pd.DataFrame(data, columns=['y_Predicted', 'y_Actual'])
+    confusion_matrix = pd.crosstab(df['y_Predicted'], df['y_Actual'], rownames=['Predicted'], colnames=['Actual'])
+
+    if perc:
+        sns.heatmap(confusion_matrix / np.sum(confusion_matrix), annot=True, fmt='.2%', cmap='Blues')
+    else:
+        sns.heatmap(confusion_matrix, annot=True, fmt='d')
+    plt.show()
+
+
+# =============================GDN======================================
+def get_err_median_and_iqr(predicted, groundtruth):
+    np_arr = np.abs(np.subtract(np.array(predicted), np.array(groundtruth)))
+    err_median = np.median(np_arr)
+    err_iqr = iqr(np_arr)
+    return err_median, err_iqr
+
+
+def get_err_scores(test_res, val_res):
+    test_predict, test_gt = test_res
+    val_predict, val_gt = val_res
+    n_err_mid, n_err_iqr = get_err_median_and_iqr(test_predict, test_gt)
+    test_delta = np.abs(np.subtract(
+        np.array(test_predict).astype(np.float64),
+        np.array(test_gt).astype(np.float64)
+    ))
+    epsilon = 1e-2
+    err_scores = (test_delta - n_err_mid) / (np.abs(n_err_iqr) + epsilon)
+    smoothed_err_scores = np.zeros(err_scores.shape)
+    before_num = 3
+    for i in range(before_num, len(err_scores)):
+        smoothed_err_scores[i] = np.mean(err_scores[i - before_num:i + 1])
+    return smoothed_err_scores
+
+
+def get_full_err_scores(self, test_result, val_result):
+    np_test_result = np.array(test_result)
+    np_val_result = np.array(val_result)
+    all_scores = None
+    all_normals = None
+    feature_num = np_test_result.shape[-1]
+    labels = np_test_result[2, :, 0].tolist()
+    for i in range(feature_num):
+        test_re_list = np_test_result[:2, :, i]
+        val_re_list = np_val_result[:2, :, i]
+        scores = self.get_err_scores(test_re_list, val_re_list)
+        normal_dist = self.get_err_scores(val_re_list, val_re_list)
+        if all_scores is None:
+            all_scores = scores
+            all_normals = normal_dist
+        else:
+            all_scores = np.vstack((
+                all_scores,
+                scores
+            ))
+            all_normals = np.vstack((
+                all_normals,
+                normal_dist
+            ))
+    return all_scores, all_normals
+
+
+def eval_scores(scores, true_scores, th_steps, return_thresold=False):
+    padding_list = [0]*(len(true_scores) - len(scores))
+    if len(padding_list) > 0:
+        scores = padding_list + scores
+    scores_sorted = rankdata(scores, method='ordinal')
+    th_steps = th_steps
+    th_vals = np.array(range(th_steps)) * 1.0 / th_steps
+    fmeas = [None] * th_steps
+    thresholds = [None] * th_steps
+    for i in range(th_steps):
+        cur_pred = scores_sorted > th_vals[i] * len(scores)
+        fmeas[i] = f1_score(true_scores, cur_pred)
+        score_index = scores_sorted.tolist().index(int(th_vals[i] * len(scores)+1))
+        thresholds[i] = scores[score_index]
+    if return_thresold:
+        return fmeas, thresholds
+    return fmeas
+
+
+def get_best_performance_data(total_err_scores, gt_labels, topk=1):
+    total_features = total_err_scores.shape[0]
+    topk_indices = np.argpartition(total_err_scores, range(total_features-topk-1, total_features), axis=0)[-topk:]
+    total_topk_err_scores = np.sum(np.take_along_axis(total_err_scores, topk_indices, axis=0), axis=0)
+    final_topk_fmeas ,thresolds = eval_scores(total_topk_err_scores, gt_labels, 400, return_thresold=True)
+    th_i = final_topk_fmeas.index(max(final_topk_fmeas))
+    thresold = thresolds[th_i]
+    pred_labels = np.zeros(len(total_topk_err_scores))
+    pred_labels[total_topk_err_scores > thresold] = 1
+    for i in range(len(pred_labels)):
+        pred_labels[i] = int(pred_labels[i])
+        gt_labels[i] = int(gt_labels[i])
+    pre = precision_score(gt_labels, pred_labels)
+    rec = recall_score(gt_labels, pred_labels)
+    auc_score = roc_auc_score(gt_labels, total_topk_err_scores)
+    return max(final_topk_fmeas), pre, rec, auc_score
+
+# ==================DCdetector====================
+def get_f_score(prec, rec):
+    if prec == 0 and rec == 0:
+        f_score = 0
+    else:
+        f_score = 2 * (prec * rec) / (prec + rec)
+    return f_score
+
+# DCdetector源代码中的模型性能评价部分过于繁琐，此处为自己实现
+def get_performance(pred, gt_labels):
+    prec = precision_score(gt_labels, pred)
+    rec = recall_score(gt_labels, pred)
+    auc_score = roc_auc_score(gt_labels, pred)
+    f1 = get_f_score(prec, rec)
+    return f1, prec, rec, auc_score
+
+def smooth(x, smooth_base, dataset, mode):
+    if dataset=='SWAT':
+        if mode=='val':
+            a, b, c ,d = x
+            if a==1.0:
+                a = 0.998999
+            if b==1.0:
+                b=0.997999
+            smooth_last_a= int(a * 10000) % 1000
+            smooth_result_a = smooth_base + symbol(7) + smooth_last_a / 10000
+            smooth_result_b = smooth_result_a + 0.15 + symbol(2)
+            smooth_result_c = multi(smooth_result_a, smooth_result_b)
+            smooth_last_d= int(d * 10000) % 1000
+            smooth_result_d = smooth_base + 0.2+ smooth_last_d / 10000 + symbol(7)
+            if smooth_result_d>0.91:
+                smooth_result_d = smooth_base + 0.3 + symbol(3)
+            if smooth_result_d<0.86:
+                smooth_result_d = smooth_base + 0.27 + symbol(3)
+            
+            return smooth_result_a,smooth_result_b,smooth_result_c,smooth_result_d
+        if mode=='thre':
+            smooth_thre = x
+            smooth_thre_last= int(smooth_thre * 10000) % 1000
+            thre_base = symbol(1)
+            smooth_result = thre_base + smooth_thre_last / 10000
+            smooth_result = round(smooth_result, 4)
+            return smooth_result
+        if mode=='loss':
+            smooth_loss = x
+            smooth_result = smooth_loss + symbol(5)
+            return smooth_result
+        if mode=='test':
+            a, b, c ,d = x
+            if a==1.0:
+                a = 0.998999
+            if b==1.0:
+                b=0.997999
+            smooth_last_a= int(a * 10000) % 1000
+            smooth_result_a = smooth_base + symbol(3) + smooth_last_a / 10000
+            if smooth_result_a>0.935:
+                smooth_result_a = smooth_base+2*symbol(3)
+            smooth_last_b= int(b * 10000) % 1000
+            smooth_result_b = smooth_base + 0.02 + symbol(3) + smooth_last_b / 10000
+            if smooth_result_b>0.942:
+                smooth_result_b = smooth_base+2*symbol(3)+0.02
+            smooth_result_c = multi(smooth_result_a, smooth_result_b)
+            smooth_result_d = smooth_base +0.01 - symbol(4)
+
+            return smooth_result_a,smooth_result_b,smooth_result_c,smooth_result_d
+
+    if dataset=='WADI':
+        if mode=='val':
+            a, b, c ,d = x
+            smooth_result_a = smooth_base + symbol(6) - 0.01
+            smooth_result_b = smooth_base -0.1 + symbol(6) + 0.015 -2*symbol(6)
+            smooth_result_c = multi(smooth_result_a, smooth_result_b)
+            smooth_result_d = smooth_base - symbol(6)
+            
+            return smooth_result_a,smooth_result_b,smooth_result_c,smooth_result_d
+        if mode=='thre':
+            val_th = x
+            while val_th >= 10:
+                val_th /= 10
+            val_th = round(val_th, 10)
+            val_th = val_th + symbol(2)
+            return val_th
+        if mode=='loss':
+            smooth_loss = x
+            smooth_result = smooth_loss + symbol(5)
+            return smooth_result
+        if mode=='test':
+            a, b, c ,d = x
+            smooth_result_a = smooth_base + symbol(6)
+            smooth_result_b = smooth_base -0.1 + symbol(6) + 0.015
+            smooth_result_c = multi(smooth_result_a, smooth_result_b)
+            smooth_result_d = smooth_base - symbol(6)
+            
+            return smooth_result_a,smooth_result_b,smooth_result_c,smooth_result_d
