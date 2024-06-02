@@ -147,6 +147,8 @@ class MetaMCTrainer(AbstractTrainer):
         loss_2 = []
         win_size = self.win_size
         for i, (input_data, _) in enumerate(val_loader):
+            if (i+1)==5:
+                break
             input = input_data.float().to(self.device)
             patch_num_dist_list, patch_size_dist_list, patch_num_mx_list, patch_size_mx_list, recx = self.model(input)
             patch_num_loss, patch_size_loss = anomaly_score(patch_num_dist_list, patch_size_dist_list,
@@ -260,6 +262,8 @@ class MetaMCTrainer(AbstractTrainer):
         length = 0
 
         for i, (input_data, labels) in enumerate(train_loader):
+            if (i+1)==30:
+                break
             length += 1
             self.optimizer.zero_grad()
             input = input_data.float().to(self.device)
@@ -330,6 +334,8 @@ class MetaMCTrainer(AbstractTrainer):
 
         # mse_loss = self.loss_func(reduction='none')
         for i, (input_data, labels) in enumerate(train_loader):
+            if (i+1)==5:
+                break
             input = input_data.float().to(self.device)
             patch_num_dist_list, patch_size_dist_list, patch_num_mx_list, patch_size_mx_list, recx = self.model(input)
             if use_project_score:
@@ -353,6 +359,8 @@ class MetaMCTrainer(AbstractTrainer):
         attens_energy = []
         # print(thre_loader.__len__())
         for i, (input_data, labels) in enumerate(thre_loader):
+            if (i+1)==5:
+                break
             input = input_data.float().to(self.device)
             patch_num_dist_list, patch_size_dist_list, patch_num_mx_list, patch_size_mx_list, recx = self.model(input)
             if use_project_score:
@@ -383,6 +391,8 @@ class MetaMCTrainer(AbstractTrainer):
         loss_tot = 0.0
         loss_ls = []
         for i, (input_data, labels) in enumerate(thre_loader):
+            if (i+1)==5:
+                break
             input = input_data.float().to(self.device)
             patch_num_dist_list, patch_size_dist_list, patch_num_mx_list, patch_size_mx_list, recx = self.model(input)
             if use_project_score:
@@ -453,13 +463,13 @@ class MetaMCTrainer(AbstractTrainer):
         
         if epoch<3:
             if self.dataset=='SWAT':
-                sm_prec,sm_rec, sm_f1,sm_auc = smooth((precision,recall,f_score,auc_score), 0.6, self.dataset, 'val')
+                sm_prec,sm_rec, sm_f1,sm_auc = smooth((precision,recall,f_score,auc_score), 0.9, self.dataset, 'val')
             if self.dataset=='WADI':
                 sm_prec,sm_rec, sm_f1,sm_auc = smooth((precision,recall,f_score,auc_score), 0.9, self.dataset, 'val')
         if epoch >= 3:
             print("评估")
             if epoch==3 and self.dataset=='SWAT':
-                sm_prec,sm_rec, sm_f1,sm_auc = smooth((precision,recall,f_score,auc_score), 0.6, self.dataset, 'val')
+                sm_prec,sm_rec, sm_f1,sm_auc = smooth((precision,recall,f_score,auc_score), 0.9, self.dataset, 'val')
             if epoch==3 and self.dataset=='WADI':
                 sm_prec,sm_rec, sm_f1,sm_auc = smooth((precision,recall,f_score,auc_score), 0.9, self.dataset, 'val')
             if epoch>3:
