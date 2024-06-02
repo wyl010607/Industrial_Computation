@@ -1,12 +1,13 @@
 import torch
 import torch.nn as nn
 
+
 class RevIN(nn.Module):
-    def __init__(self, num_features, eps=1e-5, affine=True):
+    def __init__(self, num_features: int, eps=1e-5, affine=True):
         """
-        :param num_features: 通道数或特征数
-        :param eps
-        :param affine: 实例归一化的可学习参数
+        :param num_features: the number of features or channels
+        :param eps: a value added for numerical stability
+        :param affine: if True, RevIN has learnable affine parameters
         """
         super(RevIN, self).__init__()
         self.num_features = num_features
@@ -15,7 +16,7 @@ class RevIN(nn.Module):
         if self.affine:
             self._init_params()
 
-    def forward(self, x, mode):
+    def forward(self, x, mode:str):
         if mode == 'norm':
             self._get_statistics(x)
             x = self._normalize(x)
@@ -27,9 +28,9 @@ class RevIN(nn.Module):
     def _init_params(self):
         # initialize RevIN params: (C,)
         self.affine_weight = torch.ones(self.num_features)
+        self.affine_weight = torch.nn.Parameter(self.affine_weight, requires_grad=False)
         self.affine_bias = torch.zeros(self.num_features)
-        self.affine_weight=self.affine_weight.to(device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'))
-        self.affine_bias=self.affine_bias.to(device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'))
+        self.affine_bias = torch.nn.Parameter(self.affine_bias, requires_grad=False)
 
     def _get_statistics(self, x):
         dim2reduce = tuple(range(1, x.ndim-1))
