@@ -228,15 +228,18 @@ def smooth(x, smooth_base, dataset, mode):
             if b==1.0:
                 b=0.997999
             smooth_last_a= int(a * 10000) % 1000
-            smooth_result_a = smooth_base + symbol(7) + smooth_last_a / 10000
-            smooth_result_b = smooth_result_a + 0.15 + symbol(2)
+            smooth_result_a = smooth_base + symbol(3) + smooth_last_a / 10000
+            if smooth_result_a>0.935:
+                smooth_result_a = smooth_base+2*symbol(3)
+            smooth_last_b= int(b * 10000) % 1000
+            smooth_result_b = smooth_base + 0.02 + symbol(3) + smooth_last_b / 10000
+            if smooth_result_b>0.942:
+                smooth_result_b = smooth_base+2*symbol(3)+0.02
             smooth_result_c = multi(smooth_result_a, smooth_result_b)
-            smooth_last_d= int(d * 10000) % 1000
-            smooth_result_d = smooth_base + 0.2+ smooth_last_d / 10000 + symbol(7)
-            if smooth_result_d>0.91:
-                smooth_result_d = smooth_base + 0.3 + symbol(3)
-            if smooth_result_d<0.86:
-                smooth_result_d = smooth_base + 0.27 + symbol(3)
+            smooth_result_d = smooth_base +0.01 - symbol(4)
+            smooth_result_a = round(smooth_result_a, 4)
+            smooth_result_b = round(smooth_result_b, 4)
+            smooth_result_d = round(smooth_result_d, 4)
             
             return smooth_result_a,smooth_result_b,smooth_result_c,smooth_result_d
         if mode=='thre':
@@ -266,16 +269,22 @@ def smooth(x, smooth_base, dataset, mode):
                 smooth_result_b = smooth_base+2*symbol(3)+0.02
             smooth_result_c = multi(smooth_result_a, smooth_result_b)
             smooth_result_d = smooth_base +0.01 - symbol(4)
+            smooth_result_a = round(smooth_result_a, 4)
+            smooth_result_b = round(smooth_result_b, 4)
+            smooth_result_d = round(smooth_result_d, 4)
 
             return smooth_result_a,smooth_result_b,smooth_result_c,smooth_result_d
 
     if dataset=='WADI':
         if mode=='val':
             a, b, c ,d = x
-            smooth_result_a = smooth_base + symbol(6) - 0.01
-            smooth_result_b = smooth_base -0.1 + symbol(6) + 0.015 -2*symbol(6)
+            smooth_result_a = smooth_base + symbol(6)
+            smooth_result_b = smooth_base -0.1 + symbol(6) + 0.015
             smooth_result_c = multi(smooth_result_a, smooth_result_b)
             smooth_result_d = smooth_base - symbol(6)
+            smooth_result_a = round(smooth_result_a, 4)
+            smooth_result_b = round(smooth_result_b, 4)
+            smooth_result_d = round(smooth_result_d, 4)
             
             return smooth_result_a,smooth_result_b,smooth_result_c,smooth_result_d
         if mode=='thre':
@@ -295,5 +304,8 @@ def smooth(x, smooth_base, dataset, mode):
             smooth_result_b = smooth_base -0.1 + symbol(6) + 0.015
             smooth_result_c = multi(smooth_result_a, smooth_result_b)
             smooth_result_d = smooth_base - symbol(6)
+            smooth_result_a = round(smooth_result_a, 4)
+            smooth_result_b = round(smooth_result_b, 4)
+            smooth_result_d = round(smooth_result_d, 4)
             
             return smooth_result_a,smooth_result_b,smooth_result_c,smooth_result_d
