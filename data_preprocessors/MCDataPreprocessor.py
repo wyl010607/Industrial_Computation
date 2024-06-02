@@ -2,10 +2,9 @@ import numpy as np
 from .abs import AbstractDataPreprocessor
 from utils.scaler import StandardScaler, MinMaxScaler
 from utils.datasegment import get_loader_segment
-from utils.tasksplit import TaskDataprocess
 
 
-class MetaMCDataPreprocessor(AbstractDataPreprocessor):
+class MCDataPreprocessor(AbstractDataPreprocessor):
     """
     Data Preprocessor for DCS data.
     """
@@ -18,9 +17,6 @@ class MetaMCDataPreprocessor(AbstractDataPreprocessor):
         dataset='SWAT',
         dist=0,
         ret_data=False,
-        meta_batch=150,
-        support_num=5,
-        query_num=10,
         *args,
         **kwargs
     ):
@@ -34,10 +30,9 @@ class MetaMCDataPreprocessor(AbstractDataPreprocessor):
         self.update_dataset_params = {}
         self.update_model_params = {}
         self.update_trainer_params = {}
-        # MAML模块参数
-        self.meta_batch = meta_batch
-        self.support_num = support_num
-        self.query_num = query_num
+        # self.meta_batch = meta_batch
+        # self.support_num = support_num
+        # self.query_num = query_num
 
 
     def load_data(self):
@@ -83,8 +78,5 @@ class MetaMCDataPreprocessor(AbstractDataPreprocessor):
                                               mode='test', dataset=self.dataset, step=self.step, dist=self.dist, ret_data = self.ret_data)
         thre_dataset, thre_sampler, thre_shuffle = get_loader_segment(self.data_path, win_size=self.win_size,
                                               mode='thre', dataset=self.dataset, step=self.step, dist=self.dist, ret_data = self.ret_data)
-        # 元数据集划分
-        meta_data_split = TaskDataprocess(train_dataset, self.meta_batch, self.support_num, self.query_num)
-        task_train, task_val = meta_data_split.task_split()
-        
-        return task_train, task_val, train_dataset, train_sampler, train_shuffle, val_dataset, val_sampler, val_shuffle, test_dataset, test_sampler, test_shuffle, thre_dataset, thre_sampler, thre_shuffle
+
+        return train_dataset, train_sampler, train_shuffle, val_dataset, val_sampler, val_shuffle, test_dataset, test_sampler, test_shuffle, thre_dataset, thre_sampler, thre_shuffle
