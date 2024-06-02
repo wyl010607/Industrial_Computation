@@ -1,9 +1,9 @@
 # This is an example of data_config.yaml
 
 # data_preprocessors
-data_preprocessor_name: MetaMCDataPreprocessor
+data_preprocessor_name: MCDataPreprocessor
 data_preprocessor_params:
-  data_path: '/home/MetaMCSWaT/data/SWaT/'
+  data_path: '/home/MCSWaT/data/SWaT/'
   # data_path: '/home/MetaMCWADI/data/WADI/'
   win_size: 105
   step: 1
@@ -12,9 +12,6 @@ data_preprocessor_params:
   flag: "train"
   dist: 0
   ret_data: False
-  meta_batch: 150
-  support_num: 5
-  query_num: 10
 
 dataloader_params:
   num_workers: 8
