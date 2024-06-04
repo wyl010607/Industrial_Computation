@@ -85,11 +85,13 @@ DCdetector:
   n_heads: 1
 
 GDN:
-  dim: 128
+  dim: 64
   input_dim: 5
   out_layer_num: 1
-  out_layer_inter_dim: 256
-  topk: 30
+  out_layer_inter_dim: 128
+  topk: 5
+
+USAD:
 
 
 
