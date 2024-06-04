@@ -1,0 +1,19 @@
+# This is an example of data_config.yaml
+
+# data_preprocessors
+data_preprocessor_name: GDNDataPreprocessor
+data_preprocessor_params:
+  # train_path: '/home/featurize/ICGDN/data/GDN/swat/train.csv'
+  # test_path: '/home/featurize/ICGDN/data/GDN/swat/test.csv'
+  train_path: '/home/featurize/ICGDN/data/GDN/wadi/train.csv'
+  test_path: '/home/featurize/ICGDN/data/GDN/wadi/test.csv'
+  slide_win: 5
+  slide_stride: 1
+  # dataset: 'swat'
+  dataset: 'wadi'
+  val_ratio: 0.1
+
+dataloader_params:
+  num_workers: 0
+  pin_memory: True
+  drop_last: False
