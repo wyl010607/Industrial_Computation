@@ -1,5 +1,11 @@
 import numpy as np
+from matplotlib import pyplot as plt
+import pandas as pd
+import seaborn as sns
+from scipy.stats import iqr, rankdata
+
 from .recorder import symbol, multi
+from sklearn.metrics import precision_score, recall_score, roc_auc_score, f1_score, roc_curve
 
 def get_mae(y_true, y_pred):
     """
@@ -219,93 +225,12 @@ def get_performance(pred, gt_labels):
     f1 = get_f_score(prec, rec)
     return f1, prec, rec, auc_score
 
-def smooth(x, smooth_base, dataset, mode):
-    if dataset=='SWAT':
-        if mode=='val':
-            a, b, c ,d = x
-            if a==1.0:
-                a = 0.998999
-            if b==1.0:
-                b=0.997999
-            smooth_last_a= int(a * 10000) % 1000
-            smooth_result_a = smooth_base + symbol(3) + smooth_last_a / 10000
-            if smooth_result_a>0.935:
-                smooth_result_a = smooth_base+2*symbol(3)
-            smooth_last_b= int(b * 10000) % 1000
-            smooth_result_b = smooth_base + 0.02 + symbol(3) + smooth_last_b / 10000
-            if smooth_result_b>0.942:
-                smooth_result_b = smooth_base+2*symbol(3)+0.02
-            smooth_result_c = multi(smooth_result_a, smooth_result_b)
-            smooth_result_d = smooth_base +0.01 - symbol(4)
-            smooth_result_a = round(smooth_result_a, 4)
-            smooth_result_b = round(smooth_result_b, 4)
-            smooth_result_d = round(smooth_result_d, 4)
-            
-            return smooth_result_a,smooth_result_b,smooth_result_c,smooth_result_d
-        if mode=='thre':
-            smooth_thre = x
-            smooth_thre_last= int(smooth_thre * 10000) % 1000
-            thre_base = symbol(1)
-            smooth_result = thre_base + smooth_thre_last / 10000
-            smooth_result = round(smooth_result, 4)
-            return smooth_result
-        if mode=='loss':
-            smooth_loss = x
-            smooth_result = smooth_loss + symbol(5)
-            return smooth_result
-        if mode=='test':
-            a, b, c ,d = x
-            if a==1.0:
-                a = 0.998999
-            if b==1.0:
-                b=0.997999
-            smooth_last_a= int(a * 10000) % 1000
-            smooth_result_a = smooth_base + symbol(3) + smooth_last_a / 10000
-            if smooth_result_a>0.935:
-                smooth_result_a = smooth_base+2*symbol(3)
-            smooth_last_b= int(b * 10000) % 1000
-            smooth_result_b = smooth_base + 0.02 + symbol(3) + smooth_last_b / 10000
-            if smooth_result_b>0.942:
-                smooth_result_b = smooth_base+2*symbol(3)+0.02
-            smooth_result_c = multi(smooth_result_a, smooth_result_b)
-            smooth_result_d = smooth_base +0.01 - symbol(4)
-            smooth_result_a = round(smooth_result_a, 4)
-            smooth_result_b = round(smooth_result_b, 4)
-            smooth_result_d = round(smooth_result_d, 4)
 
-            return smooth_result_a,smooth_result_b,smooth_result_c,smooth_result_d
+def smooth_score(x, smooth_base):
+        a, b, c, d = x
+        smooth_result_a = round(a, smooth_base)
+        smooth_result_b = round(b, smooth_base)
+        smooth_result_c = round(c, smooth_base)
+        smooth_result_d = round(d, smooth_base)
 
-    if dataset=='WADI':
-        if mode=='val':
-            a, b, c ,d = x
-            smooth_result_a = smooth_base + symbol(6)
-            smooth_result_b = smooth_base -0.1 + symbol(6) + 0.015
-            smooth_result_c = multi(smooth_result_a, smooth_result_b)
-            smooth_result_d = smooth_base - symbol(6)
-            smooth_result_a = round(smooth_result_a, 4)
-            smooth_result_b = round(smooth_result_b, 4)
-            smooth_result_d = round(smooth_result_d, 4)
-            
-            return smooth_result_a,smooth_result_b,smooth_result_c,smooth_result_d
-        if mode=='thre':
-            val_th = x
-            while val_th >= 10:
-                val_th /= 10
-            val_th = round(val_th, 10)
-            val_th = val_th + symbol(2)
-            return val_th
-        if mode=='loss':
-            smooth_loss = x
-            smooth_result = smooth_loss + symbol(5)
-            return smooth_result
-        if mode=='test':
-            a, b, c ,d = x
-            smooth_result_a = smooth_base + symbol(6)
-            smooth_result_b = smooth_base -0.1 + symbol(6) + 0.015
-            smooth_result_c = multi(smooth_result_a, smooth_result_b)
-            smooth_result_d = smooth_base - symbol(6)
-            smooth_result_a = round(smooth_result_a, 4)
-            smooth_result_b = round(smooth_result_b, 4)
-            smooth_result_d = round(smooth_result_d, 4)
-            
-            return smooth_result_a,smooth_result_b,smooth_result_c,smooth_result_d
+        return smooth_result_a, smooth_result_b, smooth_result_c, smooth_result_d
