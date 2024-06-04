@@ -33,6 +33,7 @@ trainer_params:
   anomaly_ratio: 1
   index: 137
   mode: "train"
+  smooth_base: 4
   enable_early_stop: True
   early_stop_patience: 3 # 多少个epoch没有提升就停止训练
   early_stop_min_is_best: True # 验证集上loss是否越小越好
