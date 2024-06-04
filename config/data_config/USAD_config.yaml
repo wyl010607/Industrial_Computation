@@ -1,0 +1,19 @@
+# This is an example of data_config.yaml
+
+# data_preprocessors
+data_preprocessor_name: GDNDataPreprocessor
+data_preprocessor_params:
+  data_train_path: '/home/ICUSAD/data/USAD/SWAT/SWaT_Dataset_Normal_v1.csv'
+  data_test_path: '/home/ICUSAD/data/USAD/SWAT/SWaT_Dataset_Attack_v0.csv'
+  # data_train_path: '/home/ICUSAD/data/USAD/WADI/WADI_14days.csv'
+  # data_test_path: '/home/ICUSAD/data/USAD/WADI/SWADI_attackdata.csv'
+  dataset: 'swat'
+  # dataset: 'wadi'
+  window_size: 10
+  hidden_size: 100
+
+dataloader_params:
+  num_workers: 0
+  shuffle: False
+  pin_memory: True
+  drop_last: False
