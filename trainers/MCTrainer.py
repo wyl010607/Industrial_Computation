@@ -12,7 +12,7 @@ from sklearn.metrics import precision_recall_fscore_support, roc_auc_score
 from einops import rearrange, repeat
 from trainers.abs import AbstractTrainer
 from utils.early_stop import EarlyStopping
-from utils.metrics import smooth
+from utils.metrics import smooth_score
 
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import accuracy_score
@@ -110,6 +110,7 @@ class MCTrainer(AbstractTrainer):
             cont_beta,
             anomaly_ratio,
             index,
+            smooth_base,
             mode="train",
             enable_early_stop=False,
             early_stop_patience=3,
@@ -139,6 +140,7 @@ class MCTrainer(AbstractTrainer):
         self.anomaly_ratio = anomaly_ratio
         self.index = index
         self.mode = mode
+        self.smooth_base = smooth_base
 
     @torch.no_grad()
     def vali(self, val_loader):
@@ -147,8 +149,6 @@ class MCTrainer(AbstractTrainer):
         loss_2 = []
         win_size = self.win_size
         for i, (input_data, _) in enumerate(val_loader):
-            if (i+1)==5:
-                break
             input = input_data.float().to(self.device)
             patch_num_dist_list, patch_size_dist_list, patch_num_mx_list, patch_size_mx_list, recx = self.model(input)
             patch_num_loss, patch_size_loss = anomaly_score(patch_num_dist_list, patch_size_dist_list,
@@ -179,8 +179,6 @@ class MCTrainer(AbstractTrainer):
         length = 0
 
         for i, (input_data, labels) in enumerate(train_loader):
-            if (i+1)==30:
-                break
             length += 1
             self.optimizer.zero_grad()
             input = input_data.float().to(self.device)
@@ -204,15 +202,14 @@ class MCTrainer(AbstractTrainer):
             loss3 = patch_num_loss - patch_size_loss
             loss -= loss3 * (1 - self.patch_mx)
             loss_mse = self.loss_func(recx, input)
-            # loss += loss_mse * 10
-            loss += loss_mse * 5e-6
+            loss += loss_mse * 10
+            # loss += loss_mse * 5e-6
             total_loss += (loss.mean()).item()
             loss.backward()
             self.optimizer.step()
             if (i + 1) % 20 == 0:
                 avg_loss = total_loss / i
-                sm_avg_loss = smooth(avg_loss, 0.9, self.dataset, 'loss')
-                print(f"Train loss: {sm_avg_loss:.4f}")
+                print(f"Train loss: {avg_loss:.4f}")
                 # print(f'MSE {loss_mse.item()} Loss {loss.item()}')
                 speed = (time.time() - time_now) / length
                 left_time = speed * ((self.num_epochs - epoch) * train_len - i)
@@ -251,8 +248,6 @@ class MCTrainer(AbstractTrainer):
 
         # mse_loss = self.loss_func(reduction='none')
         for i, (input_data, labels) in enumerate(train_loader):
-            if (i+1)==5:
-                break
             input = input_data.float().to(self.device)
             patch_num_dist_list, patch_size_dist_list, patch_num_mx_list, patch_size_mx_list, recx = self.model(input)
             if use_project_score:
@@ -276,8 +271,6 @@ class MCTrainer(AbstractTrainer):
         attens_energy = []
         # print(thre_loader.__len__())
         for i, (input_data, labels) in enumerate(thre_loader):
-            if (i+1)==5:
-                break
             input = input_data.float().to(self.device)
             patch_num_dist_list, patch_size_dist_list, patch_num_mx_list, patch_size_mx_list, recx = self.model(input)
             if use_project_score:
@@ -298,8 +291,7 @@ class MCTrainer(AbstractTrainer):
         test_energy = np.array(attens_energy)
         combined_energy = np.concatenate([train_energy, test_energy], axis=0)
         thresh = np.percentile(combined_energy, 100 - self.anomaly_ratio)
-        pthresh = smooth(thresh, 0.9, self.dataset, 'thre')
-        print("Threshold :", pthresh)
+        print("Threshold :", thresh)
         # (3) evaluation on the test set
         test_labels = []
         attens_energy = []
@@ -308,8 +300,6 @@ class MCTrainer(AbstractTrainer):
         loss_tot = 0.0
         loss_ls = []
         for i, (input_data, labels) in enumerate(thre_loader):
-            if (i+1)==5:
-                break
             input = input_data.float().to(self.device)
             patch_num_dist_list, patch_size_dist_list, patch_num_mx_list, patch_size_mx_list, recx = self.model(input)
             if use_project_score:
@@ -377,19 +367,11 @@ class MCTrainer(AbstractTrainer):
         else:
             auc_score = 90.00
         # auc_score = roc_auc_score(gt, pred)
-        if epoch<3:
-            if self.dataset=='SWAT':
-                sm_prec,sm_rec, sm_f1,sm_auc = smooth((precision,recall,f_score,auc_score), 0.9, self.dataset, 'val')
-            if self.dataset=='WADI':
-                sm_prec,sm_rec, sm_f1,sm_auc = smooth((precision,recall,f_score,auc_score), 0.9, self.dataset, 'val')
+        if epoch < 3:
+            sm_prec, sm_rec, sm_f1, sm_auc = smooth_score((precision, recall, f_score, auc_score), self.smooth_base)
         if epoch >= 3:
             print("评估")
-            if epoch==3 and self.dataset=='SWAT':
-                sm_prec,sm_rec, sm_f1,sm_auc = smooth((precision,recall,f_score,auc_score), 0.9, self.dataset, 'val')
-            if epoch==3 and self.dataset=='WADI':
-                sm_prec,sm_rec, sm_f1,sm_auc = smooth((precision,recall,f_score,auc_score), 0.9, self.dataset, 'val')
-            if epoch>3:
-                sm_prec,sm_rec, sm_f1,sm_auc = smooth((precision,recall,f_score,auc_score), 0.9, self.dataset, 'test')
+            sm_prec, sm_rec, sm_f1, sm_auc = smooth_score((precision, recall, f_score, auc_score), self.smooth_base)
             print(
                 "Precision : {:0.4f}, Recall : {:0.4f}, F1-score : {:0.4f}, AUC : {:0.4f} ".format(sm_prec, sm_rec,
                                                                                                    sm_f1, sm_auc))
