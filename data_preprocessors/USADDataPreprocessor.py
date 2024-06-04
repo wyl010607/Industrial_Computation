@@ -7,7 +7,7 @@ from sklearn import preprocessing
 
 
 
-class GDNDataPreprocessor(AbstractDataPreprocessor):
+class USADDataPreprocessor(AbstractDataPreprocessor):
     def __init__(
         self,
         data_train_path,
