@@ -68,8 +68,21 @@ MCdetector:
   dropout: 0.1
   activation: "relu"
   output_attention: True
-  channel: 50
-  # channel: 122
+  # channel: 50
+  channel: 122
   norm: 'in'
+
+DCdetector:
+  win_size: 105
+  enc_in: 51
+  c_out: 51
+  d_model: 256
+  e_layer: 3
+  patch_size: [3,5,7]
+  output_attention: True
+  channel: 51
+  # channel: 122
+  n_heads: 1
+
 
 
