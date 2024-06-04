@@ -84,5 +84,13 @@ DCdetector:
   # channel: 122
   n_heads: 1
 
+GDN:
+  dim: 128
+  input_dim: 5
+  out_layer_num: 1
+  out_layer_inter_dim: 256
+  topk: 30
+
+
 
 
