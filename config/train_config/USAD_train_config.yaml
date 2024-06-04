@@ -1,35 +1,28 @@
 #This is an example of train_config.yaml
 
 # basic
-random_seed: 3407
-batch_size: 1000
+random_seed: 3
+batch_size: 8000
 device: cuda:0
 load_checkpoint: False
 
 # Optimizer
-optimizer1_name: Adam
-optimizer1_params:
-  lr: 0.005
-  weight_decay: 0.0001
-optimizer2_name: Adam
-optimizer2_params:
-  lr: 0.005
-  weight_decay: 0.0001
+optimizer_name: Adam
+optimizer_params:
+  lr: 0.001
+  weight_decay: 0
 
 # Scheduler
 scheduler_name: MultiStepLR
 scheduler_params:
-  milestones: [5, 20, 40, 70]
-  gamma: 0.3
+    milestones: [5, 20, 40, 70]
+    gamma: 0.3
 
 # Trainer
 trainer_name: USADTrainer
 trainer_params:
-  max_epoch_num: 50
+  max_epoch_num: 100
+  res_pth: f"/home/alter/"
   enable_early_stop: False
-  early_stop_patience: 50 # 多少个epoch没有提升就停止训练
-  early_stop_min_is_best: False # 验证集上loss是否越小越好
-  batch: 1000
-  alpha: 0.9
-  beta: 0.1
-  window_size: 10
+  early_stop_patience: 10 # 多少个epoch没有提升就停止训练
+  early_stop_min_is_best: True # 验证集上loss是否越小越好
