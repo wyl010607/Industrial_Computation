@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from .abs import AbstractDataPreprocessor
 import torch
+import datetime
 from sklearn import preprocessing
 
 
@@ -251,4 +252,4 @@ class GDNDataPreprocessor(AbstractDataPreprocessor):
             for i in range(len(labels_down) - self.window_size):
                 windows_labels.append(list(np.int_(labels_down[i:i + self.window_size])))
 
-            return windows_normal_train, windows_normal_val, windows_attack, windows_labels
+            return windows_normal_train, windows_normal_val, windows_attack, windows_labels,w_size,z_size
